@@ -16,9 +16,13 @@ class Type extends Ardent {
 
   public static $customMessages = [
     'title.required' => 'El tipo es obligatorio',
-    'title.unique' => 'El tipo de ya ha sido registrado',
+    'title.unique' => 'Ya existe este tipo',
     'description' => 'La descripción es obligatoria',
     'increment.numeric' => 'El monto extra debe ser un número'
   ];
+
+  public function rooms() {
+    return $this->hasMany(Room::class);
+  }
 
 }
