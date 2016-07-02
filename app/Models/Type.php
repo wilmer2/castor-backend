@@ -18,7 +18,7 @@ class Type extends Ardent {
     'title.required' => 'El tipo es obligatorio',
     'title.unique' => 'El tipo de ya ha sido registrado',
     'description' => 'La descripción es obligatoria',
-    'increment.numeric' => 'El cargo extra debe ser un número'
+    'increment.numeric' => 'El monto extra debe ser un número'
   ];
 
 }
