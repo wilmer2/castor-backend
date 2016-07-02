@@ -21,4 +21,16 @@ class RoomController extends Controller {
         return response()->validation_error($newRoom->errors());
     }
   }
+
+  public function update(Request $request, $roomId) {
+    $inputData = $request->only('code_number', 'type_id');
+
+    $room = Room::findOrFail($roomId);
+
+    if($room->update($inputData)) {
+        return response()->json($room);
+    } else {
+        return response()->validation_error($room->errors());
+    } 
+  }
 }
