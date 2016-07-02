@@ -20,4 +20,16 @@ class TypeController extends Controller {
         return response()->validation_error($newType->errors());
     }
   }
+
+  public function update(Request $request, $typeId) {
+    $inputData = $request->only('title', 'description', 'increment');
+
+    $type = Type::findOrFail($typeId);
+
+    if($type->update($inputData)) {
+        return response()->json($type);
+    } else {
+        return response()->validation_error($type->errors());
+    }
+  }
 }
