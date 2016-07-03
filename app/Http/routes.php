@@ -1,6 +1,9 @@
 <?php
 
-//Route Type
+//Route Clinets
+Route::post('clients', 'ClientController@store');
+
+//Route Types
 Route::post('types', 'TypeController@store');
 Route::put('types/{typeId}', 'TypeController@update');
 
