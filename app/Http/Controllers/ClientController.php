@@ -21,4 +21,16 @@ class ClientController extends Controller {
     }
   }
 
+  public function update(Request $request, $clientId) {
+    $inputData = $request->only('identity_card', 'first_name', 'last_name', 'nationality');
+
+    $client = Client::findOrFail($clientId);
+
+    if($client->update($inputData)) {
+        return response()->json($client);
+    } else {
+        return response()->validation_error($client->errors());
+    }
+  }
+
 }
