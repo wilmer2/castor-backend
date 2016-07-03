@@ -9,7 +9,7 @@ class Client extends Ardent {
   protected $fillable = ['identity_card', 'first_name', 'last_name', 'nationality'];
 
   public static $rules = [
-    'identity_card' => 'required|unique:clients,identity_card|numeric',
+    'identity_card' => 'required|unique:clients,identity_card',
     'first_name' => 'required',
     'last_name' => 'required',
     'nationality' => 'required|in:V,E'
