@@ -2,6 +2,7 @@
 
 //Route Clinets
 Route::post('clients', 'ClientController@store');
+Route::put('clients/{clientId}', 'ClientController@update');
 
 //Route Types
 Route::post('types', 'TypeController@store');
