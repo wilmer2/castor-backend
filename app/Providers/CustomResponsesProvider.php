@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Routing\ResponseFactory;
+use Illuminate\Support\MessageBag;
 
 class CustomResponsesProvider extends ServiceProvider {
     /**
@@ -13,7 +14,14 @@ class CustomResponsesProvider extends ServiceProvider {
      */
     public function boot(ResponseFactory $factory) {
       $factory->macro('validation_error', function ($messageBag) use ($factory) {
-        $errors = $messageBag->all();
+
+
+        if($messageBag instanceof MessageBag) {
+            $errors = $messageBag->all();
+        } else {
+            $errors = $messageBag;
+        }
+        
         $jsonResponse = [
           'message' => $errors
         ];
