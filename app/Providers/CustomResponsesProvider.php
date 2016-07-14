@@ -15,7 +15,6 @@ class CustomResponsesProvider extends ServiceProvider {
     public function boot(ResponseFactory $factory) {
       $factory->macro('validation_error', function ($messageBag) use ($factory) {
 
-
         if($messageBag instanceof MessageBag) {
             $errors = $messageBag->all();
         } else {
