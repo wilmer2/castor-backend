@@ -11,11 +11,14 @@
 |
 */
 
-$factory->define(App\User::class, function (Faker\Generator $faker) {
-    return [
-        'name' => $faker->name,
-        'email' => $faker->safeEmail,
-        'password' => bcrypt(str_random(10)),
-        'remember_token' => str_random(10),
-    ];
+$factory->define(App\Models\Setting::class, function (Faker\Generator $faker) {
+   $minimumHour = '04:00';
+
+   return [
+    'price_day' => 3400,
+    'price_hour' => 600,
+    'time_minimum' => createHour($minimumHour),
+    'active_impost' => 0,
+    'impost' => 12
+  ];
 });
