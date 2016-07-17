@@ -17,7 +17,6 @@ class RentalValidator {
     }
   }
 
-
   public function isValidBetweenDates($startDate , $departureDate) {
     if($departureDate <= $startDate) {
         return false;
@@ -45,20 +44,33 @@ class RentalValidator {
     $arrivalDate, 
     $departureDate, 
     $hour, 
-    $oldDepartureDate
+    $oldDepartureDate,
+    $rentalId
   ) {
+      if($oldDepartureDate != null) {
+          $availableDateRoom = Room::availableDatesRooms(
+             $oldDepartureDate,
+             $departureDate, 
+             $roomIds, 
+             null,
+             $rentalId
+          );
 
-    if($oldDepartureDate != null) {
-        $availableDateRoom = Room::availableDatesRooms($oldDepartureDate,$departureDate, $roomIds);
-    } else {
-        $availableDateRooms = Room::availableDatesRooms($arrivalDate, $departureDate, $roomIds, $hour);
-    }
+      } else {
+          $availableDateRooms = Room::availableDatesRooms(
+             $arrivalDate, 
+             $departureDate, 
+             $roomIds, 
+             $hour,
+             $rentalId
+          );
+      }
 
-    if(count($roomIds) == $availableDateRooms->count()) {
-        return true;
-    } else {
-        return false;
-    }
+      if(count($roomIds) == $availableDateRooms->count()) {
+          return true;
+      } else {
+          return false;
+      }
   }
 
   public function isValidRoomHour(
@@ -66,30 +78,30 @@ class RentalValidator {
     $timeFrom,
     $departureTime,
     $dateFrom,
-    $departureDate
+    $departureDate,
+    $rentalId
   ) {
+      if($timeFrom >= $departureTime) {
+          $availableHourRooms = Room::availableHourIntervalRoom(
+             $dateFrom, 
+             $departureDate, 
+             $timeFrom,
+             $departureTime,
+             $roomIds
+          );
+      } else {
+          $availableHourRooms = Room::availableHourRooms(
+             $dateFrom,
+             $timeFrom,
+             $departureTime,
+             $roomIds
+          );
+     }
 
-     if($timeFrom > $departureTime) {
-        $availableHourRooms = Room::availableHourIntervalRoom(
-          $dateFrom, 
-          $departureDate, 
-          $timeFrom,
-          $departureTime,
-          $roomIds
-        );
-     } else {
-        $availableHourRooms = Room::availableHourRooms(
-          $dateFrom,
-          $timeFrom,
-          $departureTime,
-          $roomIds
-        );
-      }
-
-    if(count($roomIds) == $availableHourRooms->count()) {
+     if(count($roomIds) == $availableHourRooms->count()) {
         return true;
-    } else {
+     } else {
         return false;
-    }
-  }
+     }
+   }
 }
