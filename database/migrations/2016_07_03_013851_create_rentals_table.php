@@ -21,7 +21,7 @@ class CreateRentalsTable extends Migration
             $table->date('departure_date')->nullable();
             $table->date('cancel_date')->nullable();
             $table->enum('payment_type', ['transferencia', 'credito', 'efectivo']);
-            $table->string('state');
+            $table->string('state')->default('conciliado');
             $table->enum('type', ['hours', 'days']);
             $table->float('amount');
             $table->boolean('checkout');
