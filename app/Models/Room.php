@@ -303,7 +303,6 @@ class Room extends Ardent {
              $departureHour,
              $rentalId
           ) {
-            
 
             $q->where('arrival_date', $arrivalDate)
               ->where('arrival_time', '>=', $arrivalHour)
@@ -337,6 +336,7 @@ class Room extends Ardent {
               ->orWhere(function ($q) use ($arrivalDate, $departureDate, $rentalId) {
                   $q->where('arrival_date', '<=', $departureDate)
                     ->where('departure_date', '>=', $departureDate)
+                    ->where('type', 'days')
                     ->where('checkout', 0);
 
                   if($rentalId != null) {
