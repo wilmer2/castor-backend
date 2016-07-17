@@ -34,7 +34,8 @@ class Rental extends Ardent {
     'arrival_date' => 'required_if:reservation,1|date',
     'arrival_time' => 'required_if:reservation,1|date_format:H:i|date_hour',
     'departure_date' => 'required_if:type,days|date|after:arrival_date',
-    'extra_hour' => 'sometimes|date_format:H:i'
+    'extra_hour' => 'sometimes|date_format:H:i',
+    'departure_time' => 'date_format:H:i'
   ];
 
   public static $customMessages = [
@@ -139,7 +140,8 @@ class Rental extends Ardent {
            $hourFrom,
            $this->departure_time,
            $dateFrom,
-           $this->departure_date
+           $this->departure_date,
+           $this->id
         );
 
     } else {
@@ -150,7 +152,8 @@ class Rental extends Ardent {
            $this->arrival_date,
            $this->departure_date,
            $hourFrom,
-           $this->oldDepartureDate
+           $this->old_departureDate,
+           $this->id
         );
      }
 
