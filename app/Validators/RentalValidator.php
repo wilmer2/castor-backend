@@ -6,8 +6,6 @@ use App\Models\Room;
 
 class RentalValidator {
 
-  private $message;
-
   public function isValidDate($startDate) {
     $currentDate = currentDate();
     $beforeDate = subDay($currentDate);
@@ -30,50 +28,16 @@ class RentalValidator {
 
   public function isValidTime($startDate, $startHour) {
     $currentDate = currentDate();
-    $valid = true;
 
     if($startDate == $currentDate) {
       $currentHour = currentHour();
 
       if($startHour < $currentHour) {
-        $valid = false;
+        return false;
       }
     }
 
-    return $valid;
-  }
-
-  public function isValidDataQuery($arrivalDate, $arrivalHour, $departureDate = null) {
-    $valid = true;
-    
-    if(!$this->isValidDate($arrivalDate)) {
-        $valid = false;
-        $this->setMessage('La fecha ya paso');
-    }
-
-    if($valid) {
-      if(!$this->isValidTime($arrivalDate, $arrivalHour)) {
-          $valid = false;
-          $this->setMessage('La hora ya paso');
-      }
-    }
-
-    if($valid && $departureDate != null) {
-      if(!$this->isValidBetweenDates($arrivalDate, $departureDate)) {
-          $valid = false;
-          $this->setMessage('Ingrese fechas correctamente');
-      }
-    } 
-    
-    return $valid;
-  }
-
-  public function setMessage($message) {
-    $this->message = $message;
-  }
-
-  public function getMessage() {
-    return $this->message;
+    return true;
   }
 
   public function isValidRoomDate(
