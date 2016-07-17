@@ -15,7 +15,7 @@ Route::put('rooms/{roomId}', 'RoomController@update');
 //Route Rental
 Route::post('rentals', 'RentalController@store');
 Route::post('rentals/reservation', 'RentalController@addReservation');
-Route::get('rentals/{rentalId}/available/rooms_date', 'RentalController@getAvailableDateRoom');
+Route::get('rentals/{rentalId}/rooms_date', 'RentalController@getAvailableDateRoom');
 
 
 
@@ -52,19 +52,19 @@ Route::get('test', function () {
   dd($currentDate);
 });*/
 
-use App\Models\Room;
+/*use App\Models\Room;
 use App\Models\Rental;
 
 Route::get('test', function () {
 
-  /*$setting = getSetting();
+  $setting = getSetting();
   $startDate = '2016-07-15';
   $startHour = '02:00';
   $endHour = sumHour($startHour, $setting->time_minimum);
 
-  $rooms = Room::hourRooms($startDate, $startHour, $endHour, 1)->get();*/
+  $rooms = Room::hourRooms($startDate, $startHour, $endHour, 1)->get();
 
-  /*$arrivalDate = '2016-07-22'; 
+  $arrivalDate = '2016-07-22'; 
   $departureDate = '2016-07-26';  
   $arrivalHour = '02:00';
   $rentalId = 1;
@@ -74,7 +74,7 @@ Route::get('test', function () {
        $departureDate,
        $arrivalHour,
        $rentalId
-    )->get();*/
+    )->get();
 
   $setting = getSetting();
 
@@ -93,4 +93,4 @@ Route::get('test', function () {
   )->get();
    
   return $rooms;
-});
+});*/
