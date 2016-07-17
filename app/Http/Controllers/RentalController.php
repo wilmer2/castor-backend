@@ -8,24 +8,21 @@ use App\Http\Requests;
 use App\Models\Client;
 use App\Models\Rental;
 use App\Models\Room;
-use App\Validators\RentalValidator;
+use App\Http\Tasks\RoomTask;
 
 class RentalController extends Controller {
 
   public function store(Request $request) {
     if($request->has('clientId')) {
-        $clientId = $request->get('clientId');
-        $client = Client::findOrFail($clientId);
+        $client = Client::findOrFail($request->get('clientId'));
     } else {
-        $identityCard = $request->get('identity_card');
-        $client = Client::searchForIdentityCard($identityCard);
+        $client = Client::searchForIdentityCard($request->get('identity_card'));
     }
 
     $inputData = $request->all();
     $newRental = new Rental($inputData);
 
     $newRental->client_id = $client->id;
-    $newRental->state = 'Conciliado';
 
     if($newRental->save()) {
         $newRental->rooms()->attach($request->get('room_ids'));
@@ -38,20 +35,18 @@ class RentalController extends Controller {
 
   public function addReservation(Request $request) {
     if($request->has('clientId')) {
-        $clientId = $request->get('clientId');
-        $client = Client::findOrFail($clientId);
+        $client = Client::findOrFail($request->get('clientId'));
     } else {
-        $identityCard = $request->get('identity_card');
-        $client = Client::searchForIdentityCard($identityCard);
+        $client = Client::searchForIdentityCard($request->get('identity_card'));
     }
 
     $inputData = $request->all();
     $newReservation = new Rental($inputData);
 
     if(isset($inputData['pay'])) {
-        $newReservation->state = 'Conciliado';
+        $newReservation->state = 'conciliado';
     } else {
-        $newReservation->state = 'Por pagar';
+        $newReservation->state = 'por pagar';
     }
 
     $newReservation->client_id = $client->id;
@@ -66,57 +61,42 @@ class RentalController extends Controller {
     }
   }
 
-  public function getAvailableDateRoom(
-    Request $request,
-    RentalValidator $rentalValidator, 
-    $rentalId
-  ) {
+  public function getAvailableDateRoom(Request $request, RoomTask $roomTask,$rentalId) {
+    $rental = Rental::findOrFail($rentalId);
+    $roomsId = $rental->getRoomsId();
+      
+    $roomTask->setData(
+       $request->get('arrival_date'),
+       $request->get('arrival_time'),
+       $request->get('departure_date')
+    );
 
-     $rental = Rental::findOrFail($rentalId);
-     $roomsId = $rental->getRoomsId();
+    if(!$roomTask->isValidDataQuery()) {
+        return response()->validation_error($roomTask->getMessage());
+    }
 
-     $arrivalDate = $request->get('arrival_date');
-     $departureDate = $request->get('departure_date');
-     $arrivalHour = $request->get('arrival_time');
+    $rooms = $roomTask->getRoomDateReservation($rental->id, $roomsId);
 
-     $validQueryData = $rentalValidator->isValidDataQuery(
-        $arrivalDate, 
-        $arrivalHour, 
-        $departureDate
-     );
-
-     if(!$validQueryData) {
-        return response()->validation_error($rentalValidator->getMessage());
-     }
-
-     $rooms = Room::availableDatesRooms(
-        $arrivalDate,
-        $departureDate,
-        $roomsId,
-        $arrivalHour,
-        $rental->id
-     );
-
-     if(count($roomsId) == $rooms->count()) {
-        $rooms = $rooms->get();
-
-        return response()->json($rooms);
-     } else {
-
-        $rooms = Room::dateRooms(
-           $arrivalDate, 
-           $departureDate, 
-           $arrivalHour, 
-           $rental->id
-        );
-
-        $rooms = $rooms->get();
-
-        return response()->json(['rooms' => $rooms, 'select' => true]);
-     }
+    return response()->json($rooms);
   }
 
-  /*public function getAvalabelHourRommReservation(Request $request, $rentalId) {
+  public function getAvailableHourRoom(Request $request, RoomTask $roomTask, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
-  }*/
+    $roomsId = $rental->getRoomsId();
+
+    $roomTask->setData(
+       $request->get('arrival_date'),
+       $request->get('arrival_time'),
+       null,
+       $request->get('departure_time')
+    );
+
+    if(!$roomTask->isValidDataQuery()) {
+        return response()->validation_error($roomTask->getMessage());
+    }
+
+    $rooms = $roomTask->getRoomHourReservation($rental->id ,$roomsId);
+
+    return response()->json($rooms);
+  }
 }
