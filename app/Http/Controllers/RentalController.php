@@ -84,6 +84,7 @@ class RentalController extends Controller {
     $rental = Rental::findOrFail($rentalId);
     $roomsId = $rental->getRoomsId();
 
+
     $roomTask->setData(
        $request->get('arrival_date'),
        $request->get('arrival_time'),
