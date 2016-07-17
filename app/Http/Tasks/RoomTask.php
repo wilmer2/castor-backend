@@ -114,7 +114,7 @@ class RoomTask {
   }
 
   public function getAvailableHourRoom($rentalId = null) {
-    $this->setDepartureDateHour();
+    $this->setDepartureTime();
 
     $arrivalDate = $this->arrival_date;
     $arrivalTime = $this->arrival_time;
@@ -129,6 +129,8 @@ class RoomTask {
         )
         ->get();
     } else {
+        $departureDate = $this->departure_date;
+        
         $rooms = Room::hourRoomInterval(
            $arrivalDate,
            $departureDate,
@@ -201,10 +203,11 @@ class RoomTask {
   }
 
   public function setDepartureTime() {
-    if($this->departure_time == null) {
+    if($this->departure_time == '') {
         $setting = getSetting();
+
         $this->departure_time = sumHour($this->arrival_time, $setting->time_minimum);
-    }
+    } 
 
     $this->setDepartureDateHour();
   }
