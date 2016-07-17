@@ -26,7 +26,7 @@ class RentalController extends Controller {
 
     if($newRental->save()) {
         $newRental->rooms()->attach($request->get('room_ids'));
-
+        
         return response()->json($newRental);
     } else {
         return response()->validation_error($newRental->errors());
@@ -61,6 +61,52 @@ class RentalController extends Controller {
     }
   }
 
+  public function updateReservationForHour(Request $request, $rentalId) {
+    $rental = Rental::findOrFail($rentalId);
+
+    if(!$rental->reservation) {
+        return response()->validation_error('No se puede editar hospedaje');
+    }
+
+    $rental->type = 'hours';
+    $rental->departure_date = null;
+
+    $inputData = $request->only('arrival_date', 'arrival_time', 'departure_time', 'room_ids');
+     
+    if($rental->update($inputData)) {
+        //Se obtiene rooms_ids ya que al validar es purgado
+        $rental->rooms()->sync($request->get('room_ids'));  
+
+        return response()->json($rental);
+    } else {
+        return response()->validation_error($rental->errors());
+    }
+    
+  }
+
+  /*public function updateReservationForDate(Request $request, $rentalId) {
+    $rental = Rental::findOrFail($rentalId);
+
+    if(!$rental->reservation) {
+        return response()->validation_error('No se puede editar hospedaje');
+    }
+
+    $rental->type = 'days';
+    $rental->departure_time = createHour('12:00');
+
+    $inputData = $request->only('arrival_date', 'arrival_time', 'departure_date', 'rooms_ids');
+
+    if($rental->update($inputData)) {
+        //Se obtiene rooms_ids ya que al validar es purgado
+        $rental->rooms()->sync($request->get('room_ids'));
+
+        return response()->json($rental);
+    } else {
+        return response()->validation_error($rental->errors());
+    }
+
+  }*/
+
   public function getAvailableDateRoom(Request $request, RoomTask $roomTask,$rentalId) {
     $rental = Rental::findOrFail($rentalId);
     $roomsId = $rental->getRoomsId();
@@ -83,7 +129,6 @@ class RentalController extends Controller {
   public function getAvailableHourRoom(Request $request, RoomTask $roomTask, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
     $roomsId = $rental->getRoomsId();
-
 
     $roomTask->setData(
        $request->get('arrival_date'),
