@@ -84,7 +84,7 @@ class RentalController extends Controller {
     
   }
 
-  /*public function updateReservationForDate(Request $request, $rentalId) {
+  public function updateReservationForDate(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
 
     if(!$rental->reservation) {
@@ -94,7 +94,7 @@ class RentalController extends Controller {
     $rental->type = 'days';
     $rental->departure_time = createHour('12:00');
 
-    $inputData = $request->only('arrival_date', 'arrival_time', 'departure_date', 'rooms_ids');
+    $inputData = $request->only('arrival_date', 'arrival_time', 'departure_date', 'room_ids');
 
     if($rental->update($inputData)) {
         //Se obtiene rooms_ids ya que al validar es purgado
@@ -105,7 +105,7 @@ class RentalController extends Controller {
         return response()->validation_error($rental->errors());
     }
 
-  }*/
+  }
 
   public function getAvailableDateRoom(Request $request, RoomTask $roomTask,$rentalId) {
     $rental = Rental::findOrFail($rentalId);
