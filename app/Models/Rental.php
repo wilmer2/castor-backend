@@ -134,7 +134,7 @@ class Rental extends Ardent {
 
         $this->setDepartureTime($hourFrom);
         $this->setDepartureDate($dateFrom, $hourFrom);
-
+        
         $response = $rentalValidator->isValidRoomHour(
            $this->roomsValidation,
            $hourFrom,
