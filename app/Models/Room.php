@@ -57,8 +57,9 @@ class Room extends Ardent {
            $arrivalHour,
            $rentalId
         ) {
+
           
-          $q->where('arrival_date', '<=', $departureDate)
+          $q->where('arrival_date', '<', $departureDate)
               ->where('departure_date', '>=', $departureDate)
               ->where('checkout', 0);
 
@@ -71,6 +72,16 @@ class Room extends Ardent {
                   ->where('departure_date', '<=', $departureDate)
                   ->where('checkout', 0);
                   
+                if($rentalId != null) {
+                    $q->where('id', '<>', $rentalId);
+                }
+
+              })
+              ->orWhere(function($q) use ($departureDate, $rentalId) {
+                 $q->where('arrival_date', $departureDate)
+                    ->where('arrival_time', '<=', '12:00')
+                    ->where('checkout', 0);
+
                 if($rentalId != null) {
                     $q->where('id', '<>', $rentalId);
                 }
@@ -133,6 +144,7 @@ class Room extends Ardent {
                    $q->where('arrival_date', $departureDate)
                      ->where('departure_time', '<=', '12:00')
                      ->where('type', 'hours')
+                     ->whereNull('departure_date')
                      ->where('checkout', 0);
 
                    if($rentalId != null) {
@@ -303,7 +315,7 @@ class Room extends Ardent {
              $departureHour,
              $rentalId
           ) {
-
+             
             $q->where('arrival_date', $arrivalDate)
               ->where('arrival_time', '>=', $arrivalHour)
               ->where('type', 'hours')
@@ -334,7 +346,7 @@ class Room extends Ardent {
                   }
               })
               ->orWhere(function ($q) use ($arrivalDate, $departureDate, $rentalId) {
-                  $q->where('arrival_date', '<=', $departureDate)
+                  $q->where('arrival_date', '<', $departureDate)
                     ->where('departure_date', '>=', $departureDate)
                     ->where('type', 'days')
                     ->where('checkout', 0);
@@ -365,7 +377,7 @@ class Room extends Ardent {
       $roomsIds,
       $rentalId = null
     ) { 
-
+      
        return $query->hourRoomInterval(
          $arrivalDate,
          $departureDate, 
