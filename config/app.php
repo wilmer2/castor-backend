@@ -156,7 +156,8 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\CustomResponsesProvider::class,
-        App\Providers\CustomValidationRules::class
+        App\Providers\CustomValidationRules::class,
+        Zizaco\Entrust\EntrustServiceProvider::class
 
     ],
 
@@ -202,7 +203,8 @@ return [
         'Storage' => Illuminate\Support\Facades\Storage::class,
         'URL' => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
-        'View' => Illuminate\Support\Facades\View::class
+        'View' => Illuminate\Support\Facades\View::class,
+        'Entrust'   => Zizaco\Entrust\EntrustFacade::class
 
     ],
 
