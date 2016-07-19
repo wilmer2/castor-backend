@@ -34,3 +34,8 @@ function subDay($date) {
 function getSetting() {
   return Setting::find(1);
 }
+
+
+function currentUser() {
+  return auth()->user();
+}
