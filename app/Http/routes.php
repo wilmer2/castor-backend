@@ -1,5 +1,10 @@
 <?php
 
+
+//Route login
+Route::post('login', 'LoginController@login');
+Route::post('logout', 'LoginController@logout');
+
 //Route Clinets
 Route::post('clients', 'ClientController@store');
 Route::put('clients/{clientId}', 'ClientController@update');
@@ -19,3 +24,6 @@ Route::put('rentals/{rentalId}/reservation_hour', 'RentalController@updateReserv
 Route::put('rentals/{rentalId}/reservation_date', 'RentalController@updateReservationForDate');
 Route::get('rentals/{rentalId}/rooms_date', 'RentalController@getAvailableDateRoom');
 Route::get('rentals/{rentalId}/rooms_hour', 'RentalController@getAvailableHourRoom');
+
+
+
