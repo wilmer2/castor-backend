@@ -22,3 +22,32 @@ $factory->define(App\Models\Setting::class, function (Faker\Generator $faker) {
     'impost' => 12
   ];
 });
+
+$factory->defineAs(App\Models\Role::class, 'admin', function (Faker\Generator $faker) {
+   return [
+     'name' => 'admin',
+     'display_name' => 'administrador'
+   ];
+});
+
+$factory->defineAs(App\Models\Role::class, 'user', function (Faker\Generator $faker) {
+   return [
+     'name' => 'user',
+     'display_name' => 'usuario'
+   ];
+});
+
+$factory->defineAs(App\Models\Role::class, 'super', function (Faker\Generator $faker) {
+   return [
+     'name' => 'super',
+     'display_name' => 'super administrador'
+   ];
+});
+
+$factory->define(App\Models\User::class, function (Faker\Generator $faker) {
+   return [
+     'name' => $faker->name,
+     'email' => $faker->email,
+     'password' => bcrypt('123456')
+   ];
+});
