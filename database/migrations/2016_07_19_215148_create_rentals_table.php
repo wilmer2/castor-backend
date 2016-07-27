@@ -15,19 +15,23 @@ class CreateRentalsTable extends Migration
         Schema::create('rentals', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('client_id')->unsigned();
+            $table->integer('move_id')->unsigned()->nullable();
             $table->time('arrival_time')->nullable();
-            $table->time('departure_time')->default('12:00');
+            $table->time('departure_time')->default('12:00:00');
             $table->date('arrival_date');
             $table->date('departure_date')->nullable();
-            $table->date('cancel_date')->nullable();
+            $table->date('checkout_date')->nullable();
             $table->enum('payment_type', ['transferencia', 'credito', 'efectivo']);
             $table->string('state')->default('conciliado');
             $table->enum('type', ['hours', 'days']);
             $table->float('amount');
+            $table->float('amount_impost');
+            $table->float('amount_total');
             $table->boolean('checkout');
             $table->boolean('reservation');
             
             $table->foreign('client_id')->references('id')->on('clients')->onDelete('cascade');
+            $table->foreign('move_id')->references('id')->on('moves');
             $table->timestamps();
         });
     }

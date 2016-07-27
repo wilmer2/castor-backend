@@ -26,5 +26,9 @@ class User extends Authenticatable {
     protected $hidden = [
         'password', 'remember_token',
     ];
+
+    public function moves() {
+      return $this->hasMany(Move::class);
+    }
 }
     

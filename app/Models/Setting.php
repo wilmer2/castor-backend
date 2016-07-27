@@ -13,4 +13,15 @@ class Setting extends Ardent {
     'active_impost',
     'impost'
   ];
+
+  public function calculateImpost($amount) {
+    $impost = 0;
+
+     if($this->active_impost) {
+        $impostPos = $this->impost / 100;
+        $impost = $amount * $impostPos;
+     }
+
+     return $impost;
+  }
 }

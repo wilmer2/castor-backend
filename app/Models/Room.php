@@ -58,7 +58,7 @@ class Room extends Ardent {
            $rentalId
         ) {
 
-          
+
           $q->where('arrival_date', '<', $departureDate)
               ->where('departure_date', '>=', $departureDate)
               ->where('checkout', 0);
@@ -97,20 +97,21 @@ class Room extends Ardent {
                     $q->where('id', '<>', $rentalId);
                 }
 
-              })
-              ->orWhere(function($q) use ($arrivalDate, $arrivalHour, $rentalId) {
+              });
+
+          
+          if($arrivalHour != null) {
+             $q->orWhere(function($q) use ($arrivalDate, $arrivalHour, $rentalId) {
                 $q->where('departure_date', $arrivalDate)
                   ->where('departure_time', '>=', $arrivalHour)
                   ->where('checkout', 0);
 
-                if($rentalId != null) {
-                  $q->where('id', '<>', $rentalId);
-                }
+                 if($rentalId != null) {
+                   $q->where('id', '<>', $rentalId);
+                 }
 
-              });
-
-          if($arrivalHour != null) {
-              $q->orWhere(function ($q) use ($arrivalDate, $arrivalHour, $rentalId) {  
+              })
+              ->orWhere(function ($q) use ($arrivalDate, $arrivalHour, $rentalId) {  
                 $q->where('arrival_date', $arrivalDate)
                   ->where('arrival_time', '>=', $arrivalHour)
                   ->where('type', 'hours')

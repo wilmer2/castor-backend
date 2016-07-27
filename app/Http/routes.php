@@ -19,11 +19,12 @@ Route::put('rooms/{roomId}', 'RoomController@update');
 
 //Route Rental
 Route::post('rentals', 'RentalController@store');
+Route::get('rentals/{rentalId}/rooms_date', 'RentalController@getAvailableDateRoom');
+Route::get('rentals/{rentalId}/rooms_hour', 'RentalController@getAvailableHourRoom');
+/*Route::put('rentals/{rentalId}/renovate_date', 'RentalController@renovateDate');
+Route::put('rentals/{rentalId}/renovate_hour', 'RentalController@renovateHour');*/
+
+//Route Reservation
 Route::post('rentals/reservation', 'RentalController@addReservation');
 Route::put('rentals/{rentalId}/reservation_hour', 'RentalController@updateReservationForHour');
 Route::put('rentals/{rentalId}/reservation_date', 'RentalController@updateReservationForDate');
-Route::get('rentals/{rentalId}/rooms_date', 'RentalController@getAvailableDateRoom');
-Route::get('rentals/{rentalId}/rooms_hour', 'RentalController@getAvailableHourRoom');
-
-
-

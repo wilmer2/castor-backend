@@ -10,7 +10,7 @@ use Auth;
 class LoginController extends Controller {
 
   public function login(Request $request) {
-    $data = $request->only('email', 'password');
+    $data = $request->all();
     $authenticate = auth()->attempt(['email' => $data['email'], 'password' => $data['password']]);
 
     if($authenticate) {

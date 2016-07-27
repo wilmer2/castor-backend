@@ -4,12 +4,14 @@ namespace App\Models;
 
 use LaravelArdent\Ardent\Ardent;
 use App\Validators\RentalValidator;
+use  App\Events\RentalWasAssigned;
 
 class Rental extends Ardent {
   
   public $autoPurgeRedundantAttributes = true;
-  protected $roomsValidation = [];
-  protected $old_departureDate = null;
+  protected $rooms_validation = [];
+  protected $old_departure = null;
+  protected $extra_hour = null;
 
   protected $fillable = [
     'client_id',
@@ -17,14 +19,15 @@ class Rental extends Ardent {
     'departure_time',
     'arrival_date',
     'departure_date',
-    'cancel_date',
+    'checkout_date',
     'payment_type',
     'type',
     'amount',
     'room_ids',
-    'extra_hour',
+    'renovate_hour',
     'state',
-    'reservation'
+    'reservation',
+    'checkout'
   ];
 
   public static $rules = [
@@ -32,10 +35,10 @@ class Rental extends Ardent {
     'payment_type' => 'required|in:transferencia,credito,efectivo',
     'type' => 'required|in:hours,days',
     'arrival_date' => 'required_if:reservation,1|date',
-    'arrival_time' => 'required_if:reservation,1|date_format:H:i|date_hour',
+    'arrival_time' => 'required_if:reservation,1|date_format:H:i:s|date_hour',
     'departure_date' => 'required_if:type,days|date|after:arrival_date',
-    'extra_hour' => 'sometimes|date_format:H:i',
-    'departure_time' => 'date_format:H:i'
+    'renovate_hour' => 'sometimes|required|in:01:00:00,02:00:00,03:00:00,04:00:00',
+    'departure_time' => 'date_format:H:i:s'
   ];
 
   public static $customMessages = [
@@ -48,6 +51,7 @@ class Rental extends Ardent {
     'arrival_time.required_if' => 'La hora de ingreso es obligatoria',
     'arrival_time.date_format' => 'La hora de ingreso es inválida',
     'arrival_time.date_hour' => 'La hora ya paso',
+    'departure_time.date_format' => 'La hora de salida es inválida',
     'type.required' => 'El tipo es obligatorio',
     'type.in' => 'El tipo es inválido',
     'payment_type.required' => 'El tipo de pago es obligatorio',
@@ -61,7 +65,7 @@ class Rental extends Ardent {
     parent::__construct($attributes);
 
     $this->purgeFilters[] = function($key) {
-        $purge = ['room_ids', 'extra_hour'];
+        $purge = ['room_ids', 'renovate_hour'];
         return ! in_array($key, $purge);
     };
   }
@@ -71,21 +75,33 @@ class Rental extends Ardent {
   }
 
   public function rooms() {
-    return $this->belongsToMany(Room::class);
+    return $this->belongsToMany(Room::class)
+     ->withTimestamps()
+     ->withPivot('check_in', 'check_out');
+  }
+  
+  public function move() {
+    return $this->belongsTo(Move::class);
+  }
+
+  public function records() {
+    return $this->hasMany(Record::class);
   }
 
   /** Model Events */
 
   public function afterValidate() {
-    //Se introduce array ya que al purgar la propiedad pierde su valor
-    $this->roomsValidation = $this->room_ids;
+    //Se introduce valores ya que al purgar la pierden su valor
+    $this->rooms_validation = $this->room_ids;
+     
+    if($this->renovate_hour != null) {
+      $this->extra_hour = $this->renovate_hour;
+    }
   }
 
   public function beforeSave() {
     $valid = true;
     $rentalValidator = new RentalValidator();
-
-    $this->addDateTime();
 
     if(!$this->isValidArrivalDate($rentalValidator)) {
         $this->validationErrors->add('arrival_date', 'La fecha ya paso');
@@ -104,6 +120,10 @@ class Rental extends Ardent {
     return $valid;
   }
 
+  public function moveDispatch() {
+    event(new RentalWasAssigned($this));
+  }
+
   public function isValidArrivalDate($rentalValidator) {
     if($this->reservation) {
         return $rentalValidator->isValidDate($this->arrival_date);
@@ -113,16 +133,16 @@ class Rental extends Ardent {
   }
 
   public function isValidRenovateDate($rentalValidator) {
-    $response = true;
-
-    if($this->old_departureDate != null) {
-        $response = $rentalValidator->isValidBetweenDates(
-           $this->old_departureDate, 
+    $valid = true;
+    
+    if($this->old_departure != null) {
+        $valid = $rentalValidator->isValidBetweenDates(
+           $this->old_departure, 
            $this->departure_date
         );
     }
 
-    return $response;
+    return $valid;
   }
 
   public function isValidTimeRooms($rentalValidator) {
@@ -131,12 +151,12 @@ class Rental extends Ardent {
     if($this->extra_hour != null || $this->type == 'hours') {
         $this->validationErrors->add('departure_time', 'Algunas de las habitaciones ya estan ocupadas por estas horas');
         $dateFrom = $this->getDateFrom();
-
+        
         $this->setDepartureTime($hourFrom);
         $this->setDepartureDate($dateFrom, $hourFrom);
         
-        $response = $rentalValidator->isValidRoomHour(
-           $this->roomsValidation,
+        $valid = $rentalValidator->isValidRoomHour(
+           $this->rooms_validation,
            $hourFrom,
            $this->departure_time,
            $dateFrom,
@@ -146,18 +166,18 @@ class Rental extends Ardent {
 
     } else {
         $this->validationErrors->add('departure_date', 'Algunas de las habitaciones ya estan ocupadas por esta fechas');
-          
-        $response = $rentalValidator->isValidRoomDate(
-           $this->roomsValidation,
+
+        $valid = $rentalValidator->isValidRoomDate(
+           $this->rooms_validation,
            $this->arrival_date,
            $this->departure_date,
            $hourFrom,
-           $this->old_departureDate,
+           $this->old_departure,
            $this->id
         );
      }
 
-     return $response;
+     return $valid;
   }
 
   public function addDateTime() {
@@ -181,7 +201,7 @@ class Rental extends Ardent {
   public function setDepartureTime($hourFrom) {
     if($this->extra_hour != null) {
         $this->departure_time = sumHour($hourFrom, $this->extra_hour);
-       
+        $this->extra_hour = null;
     } else {
         $setting = getSetting();
 
@@ -194,22 +214,57 @@ class Rental extends Ardent {
 
   public function getDateFrom() {
      if($this->departure_date == null) {
-        $dateFrom = $this->arrival_date;
+        return $this->arrival_date;
     } else {
-        $dateFrom = $this->departure_date;
+        return $this->departure_date;
     }
-
-    return $dateFrom;
   }
 
   public function setDepartureDate($dateFrom, $hourFrom) {
-    if($hourFrom > $this->departure_time) {
+    if(
+        $hourFrom > $this->departure_time && 
+        $this->departure_date == null
+    ) {  
         $this->departure_date = addDay($dateFrom);
     }
   }
 
+  public function setOldDeparture() {
+    if($this->departure_date == null) {
+        $this->old_departure = $this->arrival_date;
+    } else {
+        $this->old_departure = $this->departure_date;
+    }
+  }
+
+  public function isCheckout() {
+    $currentDate = currentDate();
+
+    if(
+        $this->departure_date == null && 
+        $this->arrival_date < $currentDate ||
+        $this->departure_date < $currentDate
+    ) {  
+        $this->checkout = 1;
+        $this->forceSave();
+    }
+
+    return $this->checkout;
+  }
+
   public function getRoomsId() {
     return $this->rooms()
+    ->lists('id')
+    ->toArray();
+  }
+
+  public function getRoomsCheckout() {
+    return $this->rooms()
+    ->wherePivot('check_out', '<>', null);
+  }
+
+  public function getRoomsIdCheckout() {
+    return $this->getRoomsCheckout()
     ->lists('id')
     ->toArray();
   }

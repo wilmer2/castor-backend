@@ -4,7 +4,7 @@ use App\Models\Setting;
 use Carbon\Carbon;
 
 function createHour($hour) {
-  return date("H:i", strtotime($hour));
+  return date("H:i:s", strtotime($hour));
 }
 
 function sumHour($hour, $sumHour) {
@@ -16,7 +16,7 @@ function sumHour($hour, $sumHour) {
 }
 
 function currentHour() {
-  return date('H:i');
+  return date('H:i:s');
 }
 
 function currentDate() {

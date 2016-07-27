@@ -23,4 +23,14 @@ class Client extends Ardent {
     'nationality.required' => 'La nacionalidad es obligatoria',
     'nationality.in' => 'La nacionalidad es inválida'
   ];
+
+  public function scopeSearchForIdentityCard($query, $identityCard) {
+    $client = $query->where('identity_card', $identityCard)->first();
+
+    if($client) {
+        return $client;
+    } else {
+        abort(404);
+    }
+  }
 }

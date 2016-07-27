@@ -16,9 +16,15 @@ class CustomValidationRules extends ServiceProvider {
    public function boot() {
       Validator::extend('date_hour', function ($attribute, $value, $paramaters, $validator) {
         $arrivalDate = array_get($validator->getData(), 'arrival_date', null);
+        $reservation = array_get($validator->getData(), 'reservation', 0);
         $rentalValidator = new RentalValidator();
-
-        return $rentalValidator->isValidTime($arrivalDate, $value);
+         
+        if($reservation) {
+            return $rentalValidator->isValidTime($arrivalDate, $value);
+        } else {
+           return true;
+        }
+        
       });
    }
 
