@@ -116,7 +116,7 @@ class RentalController extends Controller {
         return response()->validation_error('La reservacion no ha sido confirmada');
     }
 
-    if($rental->arrival_date == $date) {
+    if($rental->arrival_date == $date && $rental->type == 'days') {
         return response()->validation_error('El hospedaje debe tener al menos un día para dar salida');
     }
 
@@ -138,6 +138,10 @@ class RentalController extends Controller {
     if($rental->isCheckout()) {
         return response()->validation_error('El hospedaje ya tiene salida');
     }
+
+    if($rental->rooms()->count() == 1) {
+        return response()->validation_error('El hospedaje debe tener al menos una habitación');
+    }
       
     $room = $rental->findRoom($roomId);
 
@@ -152,29 +156,29 @@ class RentalController extends Controller {
 
   }
 
-  /*public function addRooms(Request $request, $rentalId) {
+  public function addRooms(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
+    $date = currentDate();
 
     if($rental->isCheckout()) {
         return response()->validation_error('El hospedaje ya tiene salida');
     }
 
+    if($rental->reservation && $rental->arrival_date < $date) {
+        return response()->validation_error('Debe confirmar reservación');
+    }
+
     $inputData = $request->only('room_ids', 'discount');
 
     if($rental->update($inputData)) {
-        $roomIds = $inputData['room_ids'];
-        $date = currentDate();
-        $pivotData = array_fill(0, count($roomIds), ['check_in' => $date]);
-        $syncData = array_combine($roomsId, $pivotData);
-
-        $rental->rooms()->sync($syncData);
+        $rental->rooms()->sync($inputData['room_ids'], false);
         $rental->moveDispatch();
 
         return response()->json($rental);
     } else {
         return response()->validation_error($rental->errors());
     }
-  }*/
+  }
 
   
 }
