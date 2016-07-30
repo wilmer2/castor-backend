@@ -27,88 +27,13 @@ class RentalController extends Controller {
     $newRental->addDateTime();
 
     if($newRental->save()) {
-        $newRental->rooms()->attach($request->get('room_ids'));
+        $newRental->rooms()->attach($inputData['room_ids']);
 
         $newRental->moveDispatch();   
         return response()->json($newRental);
     } else {
         return response()->validation_error($newRental->errors());
     }
-  }
-
-  public function addReservation(Request $request) {
-    if($request->has('clientId')) {
-        $client = Client::findOrFail($request->get('clientId'));
-    } else {
-        $client = Client::searchForIdentityCard($request->get('identity_card'));
-    }
-
-    $inputData = $request->all();
-    $newReservation = new Rental($inputData);
-
-    if(isset($inputData['pay'])) {
-        $newReservation->state = 'conciliado';
-    } else {
-        $newReservation->state = 'por pagar';
-    }
-
-    $newReservation->client_id = $client->id;
-    $newReservation->reservation = 1;
-
-    if($newReservation->save()) {
-        $newReservation->rooms()->attach($request->get('room_ids'));
-
-        $newReservation->moveDispatch();
-        return response()->json($newReservation);
-    } else {
-        return response()->validation_error($newReservation->errors());
-    }
-  }
-
-  public function updateReservationForHour(Request $request, $rentalId) {
-    $rental = Rental::findOrFail($rentalId);
-
-    if(!$rental->reservation) {
-        return response()->validation_error('El hospedaje no se puede editar');
-    }
-
-    $rental->type = 'hours';
-    $rental->departure_date = null;
-
-    $inputData = $request->only('arrival_date', 'arrival_time', 'departure_time', 'room_ids');
-     
-    if($rental->update($inputData)) {
-        $rental->rooms()->sync($request->get('room_ids'));
-
-        $rental->moveDispatch();
-        return response()->json($rental);
-    } else {
-        return response()->validation_error($rental->errors());
-    }
-    
-  }
-
-  public function updateReservationForDate(Request $request, $rentalId) {
-    $rental = Rental::findOrFail($rentalId);
-
-    if(!$rental->reservation) {
-        return response()->validation_error('El hospedaje no se puede editar');
-    }
-
-    $rental->type = 'days';
-    $rental->departure_time = createHour('12:00:00');
-
-    $inputData = $request->only('arrival_date', 'arrival_time', 'departure_date', 'room_ids');
-
-    if($rental->update($inputData)) {
-        $rental->rooms()->sync($request->get('room_ids'));;
-        
-        $rental->moveDispatch();
-        return response()->json($rental);
-    } else {
-        return response()->validation_error($rental->errors());
-    }
-
   }
 
   public function getAvailableDateRoom(Request $request, RoomTask $roomTask,$rentalId) {
@@ -150,64 +75,99 @@ class RentalController extends Controller {
     return response()->json($rooms);
   }
 
-  /*public function renovateDate(Request $request, $rentalId) {
+  public function checkoutRoom(Request $request, $rentalId, $roomId) {
     $rental = Rental::findOrFail($rentalId);
+    $date = currentDate();
+
+    if($rental->type == 'hours' || $rental->reservation) {
+        return response()->validation_error('Los hospedajes por horas o en reservacion no pueden marcar salida');
+    }
+
+    if($rental->type == 'days' && $date == $rental->arrival_date) {
+        return response()->validation_error('La habitación debe tener al menos un día para dar salida');
+    }
 
     if($rental->isCheckout()) {
-        return response()->validation_error('El hospedaje no puede ser renovado');
+        return response()->validation_error('El hospedaje ya tiene salida');
+    }
+      
+    $room = $rental->findRoom($roomId);
+
+    if(!$room || $room->check_out != null) {
+        return response()->validation_error('La habitación no existe o ya tiene salida');
     }
 
-    $roomIds = $request->get('room_ids');
+    $room->pivot->check_out = $date;
+    $room->pivot->save();
+    $rental->moveDispatch();
 
-    $newRecord = new Record();
-    $newRecord->setData($rental);
-
-    $rental->setOldDeparture();
-    $rental->type = 'days';
-    $rental->room_ids = $roomIds;
-    $rental->departure_date = $request->get('departure_date');
-
-    if($rental->save()) {
-        $roomIdsCheckOut = $rental->getRoomsIdCheckout();
-
-        if(count($roomIdsCheckOut) > 0) {
-            $roomIds = array_merge($roomIds, $roomIdsCheckOut);
-        }
-
-        $rental->rooms()->sync($roomIds);
-        $rental->records()->save($newRecord);
-        $rental->moveDispatch();
-
-        return response()->json($rental);
-    } else {
-        return response()->validation_error($rental->errors());
-    }
+    return response()->json(['message' => 'Salida de habitación confirmada']);
   }
 
-  public function renovateHour(Request $request, $rentalId) {
+  public function checkout(Request $request, $rentalId) {
+    $rental = Rental::findOrFail($rentalId);
+    $date = currentDate();
+
+    if($rental->checkout) {
+        return response()->validation_error('El hospedaje ya tiene salida');
+    }
+
+    if($rental->reservation) {
+        return response()->validation_error('La reservacion no ha sido confirmada');
+    }
+
+    if($rental->arrival_date == $date) {
+        return response()->validation_error('El hospedaje debe tener al menos un día para dar salida');
+    }
+
+    if($rental->type == 'days' && $date < $rental->departure_date) {
+        $rental->checkout_date = $date;
+    }
+
+    $rental->checkout = 1;
+    $rental->forceSave();
+    $rental->moveDispatch();
+
+    return response()->json($rental);
+    
+  }
+
+  public function removeRoom(Request $request, $rentalId, $roomId) {
     $rental = Rental::findOrFail($rentalId);
 
     if($rental->isCheckout()) {
-        return response()->validation_error('El hospedaje no puede ser renovado');
+        return response()->validation_error('El hospedaje ya tiene salida');
+    }
+      
+    $room = $rental->findRoom($roomId);
+
+    if(!$room || $room->check_out != null) {
+        return response()->validation_error('Habitación no puede ser removida');
     }
 
-    $roomIds = $request->get('room_ids');
+    $rental->rooms()->detach($roomId);
+    $rental->moveDispatch();
 
-    $newRecord = new Record();
-    $newRecord->setData($rental);
+    return response()->json(['message' => 'Habitación a sido removida']);
 
-    $rental->room_ids = $roomIds;
-    $rental->renovate_hour = $request->get('renovate_hour');
+  }
 
-     if($rental->save()) {
-        $roomIdsCheckOut = $rental->getRoomsIdCheckout();
+  /*public function addRooms(Request $request, $rentalId) {
+    $rental = Rental::findOrFail($rentalId);
 
-        if(count($roomIdsCheckOut) > 0) {
-            $roomIds = array_merge($roomIds, $roomIdsCheckOut);
-        }
+    if($rental->isCheckout()) {
+        return response()->validation_error('El hospedaje ya tiene salida');
+    }
 
-        $rental->rooms()->sync($roomIds);
-        $rental->records()->save($newRecord);
+    $inputData = $request->only('room_ids', 'discount');
+
+    if($rental->update($inputData)) {
+        $roomIds = $inputData['room_ids'];
+        $date = currentDate();
+        $pivotData = array_fill(0, count($roomIds), ['check_in' => $date]);
+        $syncData = array_combine($roomsId, $pivotData);
+
+        $rental->rooms()->sync($syncData);
         $rental->moveDispatch();
 
         return response()->json($rental);
@@ -215,4 +175,6 @@ class RentalController extends Controller {
         return response()->validation_error($rental->errors());
     }
   }*/
+
+  
 }
