@@ -18,7 +18,7 @@ $factory->define(App\Models\Setting::class, function (Faker\Generator $faker) {
     'price_day' => 3400,
     'price_hour' => 600,
     'time_minimum' => createHour($minimumHour),
-    'active_impost' => 0,
+    'active_impost' => 1,
     'impost' => 12
   ];
 });
