@@ -33,11 +33,12 @@ class CalculatePayment
       ->get();
 
       if($rental->type == 'days') {
-          $amount = $this->calculateAmountDay($rental, $setting, $rooms);
+          $amountRental = $this->calculateAmountDay($rental, $setting, $rooms);
       } else {
-          $amount = $this->calculateAmountTime($rental, $setting, $rooms);
+          $amountRental = $this->calculateAmountTime($rental, $setting, $rooms);
       }
-
+      
+      $amount = $this->calculateDiscount($amountRental, $rental->discount);
       $impost = $setting->calculateImpost($amount);
       $total = $amount + $impost;
 
@@ -50,19 +51,20 @@ class CalculatePayment
     }
 
     public function calculateAmountDay($rental, $setting, $rooms) {
-      $startDate = Carbon::parse($rental->arrival_date);
-
       if($rental->checkout_date != null) {
           $endDate = Carbon::parse($rental->checkout_date);
       } else {
           $endDate = Carbon::parse($rental->departure_date);
       }
 
-      $amount = 0;
+      $amount = 0; 
+      $startDate = Carbon::parse($rental->arrival_date);
 
       foreach ($rooms as $room) {
-          if($room->check_out != null) {
-              $days = $startDate->diff($room->check_out)->days;
+          if($room->pivot->check_out != null) {
+              $checkOut = Carbon::parse($room->pivot->check_out);
+
+              $days = $startDate->diff($checkOut)->days;
           } else {
               $days = $startDate->diff($endDate)->days;
           }
@@ -96,6 +98,16 @@ class CalculatePayment
       }
 
       return $amount;
+    }
+
+    public function calculateDiscount($amount, $discount) {
+      $result = $amount - $discount;
+
+      if($result < 1) {
+          $result = 0;
+      }
+
+      return $result;
     }
 
 }
