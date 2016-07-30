@@ -27,6 +27,7 @@ class CreateRentalsTable extends Migration
             $table->float('amount');
             $table->float('amount_impost');
             $table->float('amount_total');
+            $table->float('discount');
             $table->boolean('checkout');
             $table->boolean('reservation');
             
