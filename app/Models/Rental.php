@@ -27,7 +27,8 @@ class Rental extends Ardent {
     'renovate_hour',
     'state',
     'reservation',
-    'checkout'
+    'checkout',
+    'discount'
   ];
 
   public static $rules = [
@@ -38,7 +39,8 @@ class Rental extends Ardent {
     'arrival_time' => 'required_if:reservation,1|date_format:H:i:s|date_hour',
     'departure_date' => 'required_if:type,days|date|after:arrival_date',
     'renovate_hour' => 'sometimes|required|in:01:00:00,02:00:00,03:00:00,04:00:00',
-    'departure_time' => 'date_format:H:i:s'
+    'departure_time' => 'date_format:H:i:s',
+    'discount' => 'numeric'
   ];
 
   public static $customMessages = [
@@ -58,7 +60,8 @@ class Rental extends Ardent {
     'payment_type.in' => 'El tipo de pago no esta entre la opciones',
     'extra_hour.date_format' =>  'La hora de finalización es inválida', 
     'room_ids.required' => 'Las habitaciones son obligatorias',
-    'room_ids.exists' => 'Alguna de las habitaciones no existe '
+    'room_ids.exists' => 'Alguna de las habitaciones no existe ',
+    'discount.numeric' => 'El descuento debe ser un número'
   ];
 
   public function __construct($attributes = array()) {
@@ -77,7 +80,7 @@ class Rental extends Ardent {
   public function rooms() {
     return $this->belongsToMany(Room::class)
      ->withTimestamps()
-     ->withPivot('check_in', 'check_out');
+     ->withPivot('check_out');
   }
   
   public function move() {
@@ -250,6 +253,15 @@ class Rental extends Ardent {
     }
 
     return $this->checkout;
+  }
+
+
+  /** Model Querys */
+
+  public function findRoom($roomId) {
+    return $this->rooms()
+    ->where('id', $roomId)
+    ->first();
   }
 
   public function getRoomsId() {
