@@ -23,7 +23,7 @@ Route::get('rentals/{rentalId}/rooms_date', 'ReservationController@getAvailableD
 Route::get('rentals/{rentalId}/rooms_hour', 'ReservationController@getAvailableHourRoom');
 Route::post('rentals/{rentalId}/room/{roomId}/checkout', 'RentalController@checkoutRoom');
 Route::post('rentals/{rentalId}/checkout', 'RentalController@checkout');
-//Route::post('rentals/{rentalId}/add_room', 'RentalController@addRooms');
+Route::post('rentals/{rentalId}/add_room', 'RentalController@addRooms');
 Route::post('rentals/{rentalId}/room/{roomId}/remove', 'RentalController@removeRoom');
 
 //Route Reservation
