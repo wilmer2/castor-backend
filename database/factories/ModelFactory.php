@@ -60,3 +60,19 @@ $factory->define(App\Models\Client::class, function (Faker\Generator $faker) {
      'identity_card' => $faker->bankRoutingNumber
    ];
 });
+
+$factory->defineAs(App\Models\Type::class, 'basic', function (Faker\Generator $faker) {
+  return [
+    'title' => 'Basica',
+    'description' => 'Habitación con cama matrimonial, tv cable y aire acondicionado'
+  ];
+
+});
+
+$factory->defineAS(App\Models\Type::class, 'special', function (Faker\Generator $faker) {
+  return [
+    'title' => 'Especial',
+    'description' => 'Habitación con cama matrimonial, tv cable, aire acondicionado y calentador',
+    'increment' => 200
+  ];
+});
