@@ -51,3 +51,12 @@ $factory->define(App\Models\User::class, function (Faker\Generator $faker) {
      'password' => bcrypt('123456')
    ];
 });
+
+$factory->define(App\Models\Client::class, function (Faker\Generator $faker) {
+   return [
+     'first_name' => $faker->firstNameMale,
+     'last_name' => $faker->lastName,
+     'nationality' => $faker->randomElement(['E', 'V']),
+     'identity_card' => $faker->bankRoutingNumber
+   ];
+});
