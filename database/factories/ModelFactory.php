@@ -76,3 +76,6 @@ $factory->defineAS(App\Models\Type::class, 'special', function (Faker\Generator 
     'increment' => 200
   ];
 });
+
+
+
