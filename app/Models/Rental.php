@@ -4,7 +4,7 @@ namespace App\Models;
 
 use LaravelArdent\Ardent\Ardent;
 use App\Validators\RentalValidator;
-use  App\Events\RentalWasAssigned;
+use App\Events\RentalWasAssigned;
 
 class Rental extends Ardent {
   
@@ -56,6 +56,7 @@ class Rental extends Ardent {
     'departure_time.date_format' => 'La hora de salida es inválida',
     'type.required' => 'El tipo es obligatorio',
     'type.in' => 'El tipo es inválido',
+    'renovate_hour.in' => 'La hora para renovar es inválida',
     'payment_type.required' => 'El tipo de pago es obligatorio',
     'payment_type.in' => 'El tipo de pago no esta entre la opciones',
     'extra_hour.date_format' =>  'La hora de finalización es inválida', 
@@ -80,7 +81,7 @@ class Rental extends Ardent {
   public function rooms() {
     return $this->belongsToMany(Room::class)
      ->withTimestamps()
-     ->withPivot('check_out');
+     ->withPivot('check_in', 'check_out');
   }
   
   public function move() {
@@ -227,7 +228,7 @@ class Rental extends Ardent {
     if(
         $hourFrom > $this->departure_time && 
         $this->departure_date == null
-    ) {  
+    ) { 
         $this->departure_date = addDay($dateFrom);
     }
   }
@@ -241,11 +242,16 @@ class Rental extends Ardent {
   }
 
   public function isCheckout() {
+    if($this->reservation) {
+        return false;
+    }
+
     $currentDate = currentDate();
 
     if(
         $this->departure_date == null && 
         $this->arrival_date < $currentDate ||
+        $this->departure_date != null &&
         $this->departure_date < $currentDate
     ) {  
         $this->checkout = 1;
@@ -255,6 +261,47 @@ class Rental extends Ardent {
     return $this->checkout;
   }
 
+  public function reservationExpired() {
+    $currentDate = currentDate();
+    
+    if(
+        $this->reservation &&
+        $this->departure_date != null &&
+        $this->departure_date < $currentDate ||
+        $this->reservation &&
+        $this->departure_date == null &&
+        $this->arrival_date < $currentDate
+      ) {
+        return true;
+    } else {
+        return false;
+    }
+  }
+
+  public function registerRecord() {
+    $record = $this->records()
+    ->where('first', 1);
+
+    if($record->count() == 1) {
+        $record = $record->first();
+    } else {
+        $record = new Record();
+        $record->first = 1;
+    }
+
+    if($this->departure_time == null) {
+        $record->departure_time = createHour('12:00:00');
+    } else {
+        $record->departure_time = $this->departure_time;
+    }
+
+    $record->departure_date = $this->departure_date;
+    
+    $record->type = $this->type;
+    $record->rental_id = $this->id;
+
+    $record->save();
+  }
 
   /** Model Querys */
 
