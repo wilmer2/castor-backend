@@ -21,11 +21,13 @@ class Room extends Ardent {
    ];
 
    public function type() {
-     return $this->belongsTo(Type::class);
+     return $this->belongsTo(Type::class, 'id');
    }
 
    public function rentals() {
-     return $this->belongsToMany(Rental::class);
+     return $this->belongsToMany(Rental::class)
+     ->withTimestamps()
+     ->withPivot('check_out');
    }
 
    /** Model Querys */
