@@ -11,9 +11,4 @@ class Record extends Ardent {
     return $this->belongsTo(Rental::class);
   }
 
-  /*public function setData($rental) {
-    $this->type = $rental->type;
-    $this->departure_date = $rental->departure_date;
-    $this->departure_time = $rental->departure_time;
-  }*/
 }
