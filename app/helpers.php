@@ -31,6 +31,10 @@ function subDay($date) {
   return Carbon::parse($date)->subDay()->format('Y-m-d');
 }
 
+function subDays($date, $amount) {
+  return Carbon::parse($date)->subDays($amount)->format('Y-m-d');
+}
+
 function getSetting() {
   return Setting::find(1);
 }
