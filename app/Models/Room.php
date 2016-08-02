@@ -27,7 +27,7 @@ class Room extends Ardent {
    public function rentals() {
      return $this->belongsToMany(Rental::class)
      ->withTimestamps()
-     ->withPivot('check_out');
+     ->withPivot('check_out', 'check_in');
    }
 
    /** Model Querys */
