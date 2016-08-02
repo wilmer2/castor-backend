@@ -60,12 +60,13 @@ class CalculatePayment
       $amount = 0;  
 
       foreach ($rooms as $room) {
+
           if($room->pivot->check_in != null) {
               $startDate = Carbon::parse($room->pivot->check_in);
           } else {
               $startDate = Carbon::parse($rental->arrival_date);
           }
-
+             
           if($room->pivot->check_out != null) {
               $checkOut = Carbon::parse($room->pivot->check_out);
 
