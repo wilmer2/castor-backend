@@ -39,6 +39,12 @@ function getSetting() {
   return Setting::find(1);
 }
 
+function syncData($roomIds, $date) {
+  $pivotData = array_fill(0, count($roomIds), ['check_in' => $date]);
+  $syncData = array_combine($roomIds, $pivotData);
+
+  return $syncData;
+}
 
 function currentUser() {
   return auth()->user();
