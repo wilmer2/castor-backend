@@ -19,35 +19,82 @@ Route::put('rooms/{roomId}', 'RoomController@update');
 
 //Route Rental
 Route::post('rentals', 'RentalController@store');
-Route::get('rentals/{rentalId}/rooms_date', 'ReservationController@getAvailableDateRoom');
-Route::get('rentals/{rentalId}/rooms_hour', 'ReservationController@getAvailableHourRoom');
-Route::post('rentals/{rentalId}/room/{roomId}/checkout', 'RentalController@checkoutRoom');
-Route::post('rentals/{rentalId}/checkout', 'RentalController@checkout');
-Route::post('rentals/{rentalId}/add_room', 'RentalController@addRooms');
+
+//Route::post('rentals/{rentalId}/room/{roomId}/checkout', 'RentalController@checkoutRoom');
+//Route::post('rentals/{rentalId}/checkout', 'RentalController@checkout');
 Route::post('rentals/{rentalId}/room/{roomId}/remove', 'RentalController@removeRoom');
+Route::post('rentals/{rentalId}/room/{roomId}/change', 'RentalController@changeRoom');
+Route::post('rentals/{rentalId}/add_rooms/date', 'RentalController@addRoomsDate');
+//Route::post('rentals/{rentalId}/change_rooms', 'RentalController@changeRooms');
+//Route::put('rentals/{rentalId}/renovate_hour', 'RentalController@renovateHour');
+
+
 
 //Route Reservation
 Route::post('rentals/reservation', 'ReservationController@addReservation');
+Route::get('rentals/{rentalId}/rooms_date', 'ReservationController@getAvailableDateRoom');
+Route::get('rentals/{rentalId}/rooms_hour', 'ReservationController@getAvailableHourRoom');
 Route::put('rentals/{rentalId}/reservation_hour', 'ReservationController@updateReservationForHour');
 Route::put('rentals/{rentalId}/reservation_date', 'ReservationController@updateReservationForDate');
 
 
+
+/*use App\Models\Room;
+
+Route::get('test', function () {
+  $rooms = Room::whereDoesntHave('rentals', function ($q) {
+    $q->where('arrival_date', '>=', '2016-07-30')
+      ->where('departure_date', '<=', '2016-08-02')
+      ->where('check_out', null);
+  })
+  ->get();
+
+  return $rooms;
+
+});*/
+
+/*use App\Models\Room;
+
+Route::get('test', function () {
+   
+   $roomsIds = [1, 2, 3];
+   $t = 'test';
+    $rooms = Room::whereDoesntHave('rentals', function ($q) {
+      $q->where('check_out', null);
+    })
+    ->whereIn('rooms.id', $roomsIds)
+    ->get();
+
+    
+    return $rooms;
+});*/
+
+
+
+//
 /*use App\Models\Rental;
 
 Route::get('test', function () {
-  $roomsId = [3, 5];
+  //$roomsId = [3, 5];
 
-  $rental = Rental::find(1);
-  $date = currentDate();
+  //rental = Rental::find(1);
+  /*$date = currentDate();
   $pivotData = array_fill(0, count($roomsId), ['check_in' => $date]);
   $syncData = array_combine($roomsId, $pivotData);
   
+        
+        dd($pivotData, $syncData);
+  //$rental->rooms()->sync($syncData, false);
+  $d = 1;
 
-  $rental->rooms()->sync($syncData, false);
+  $arr = ['check_in', '2016-20-07'];
 
+  $l = array_combine($d, $arr);
+
+  dd($l);
  
 
-  /*dd($rooms);
+  dd($rooms);
 
 
   $speakers  = (array) Input::get('speakers'); // related ids
@@ -57,7 +104,7 @@ Route::get('test', function () {
   $user->roles()->sync($syncData);
 
 });*/
-use Carbon\Carbon;
+/*use Carbon\Carbon;
 
 Route::get('test', function () {
   $currentDate = currentDate();
@@ -68,7 +115,7 @@ Route::get('test', function () {
   $days = $date->diff($anotherDate)->days;
 
   dd($days);
-});
+});*/
 
 
 
