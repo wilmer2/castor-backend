@@ -44,8 +44,8 @@ class RentalValidator {
     $arrivalDate, 
     $departureDate, 
     $hour, 
-    $oldDepartureDate,
-    $rentalId
+    $oldDepartureDate = null,
+    $rentalId = null
   ) {
       if($oldDepartureDate != null) {
           $availableDateRooms = Room::availableDatesRooms(
