@@ -261,6 +261,24 @@ class Rental extends Ardent {
     return $this->checkout;
   }
 
+  public function isTimeout() {
+    $date = currentDate();
+    $hour = currentHour();
+    
+    if(!$this->reservation) {
+        if(
+            $this->departure_date == null && 
+            $this->departure_time < $hour ||
+            $this->departure_date == $date  &&
+            $this->departure_time < $hour
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+  }
+
   public function reservationExpired() {
     $currentDate = currentDate();
     
