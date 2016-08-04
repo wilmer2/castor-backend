@@ -266,10 +266,8 @@ class RentalController extends Controller {
   }
 
  
-
- 
-  /*public function checkoutRoom(Request $request, $rentalId, $roomId) {
-    $rental = Rental::findOrFail($rentalId);
+  public function checkoutRoom(Request $request, $rentalId, $roomId) {
+    /*$rental = Rental::findOrFail($rentalId);
     $date = currentDate();
 
     if($rental->type == 'hours' || $rental->reservation) {
@@ -297,8 +295,8 @@ class RentalController extends Controller {
     $room->pivot->save();
     $rental->moveDispatch();
 
-    return response()->json(['message' => 'Salida de habitación confirmada']);
-  }*/
+    return response()->json(['message' => 'Salida de habitación confirmada']);*/
+  }
 
   /*public function checkout(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
