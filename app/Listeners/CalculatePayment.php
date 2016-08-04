@@ -85,24 +85,32 @@ class CalculatePayment
     }
 
     public function calculateAmountTime($rental, $setting, $rooms) {
-      if($rental->departure_date != null) {
-          $toTime = strtotime($rental->departure_date.' '.$rental->departure_time);
-      } else {
-          $toTime = strtotime($rental->arrival_date.' '.$rental->departure_time) ;          
-      }
+      $amount = 0;
 
-      $fromTime = strtotime($rental->arrival_date.' '.$rental->arrival_time);
-
-      $time = round(abs($fromTime - $toTime) / 60,2);
-      $totalTime = ceil($time * (1/60));
-
-      $amountPerHour = $totalTime * $setting->price_hour;
-      $amount = $rooms->count() * $amountPerHour;
-      
       foreach ($rooms as $room) {
-        $amount += $room->increment;
-      }
+        
 
+        if($room->pivot->check_timeout != null) {
+            $departureTime = $room->pivot->check_timeout;
+        } else {
+            $departureTime = $rental->departure_time;
+        }
+
+        if($rental->departure_time != null) {
+            $toTime = strtotime($rental->departure_date.' '.$departureTime);
+        } else {
+            $toTime = strtotime($rental->arrival_date.' '.$departureTime);  
+        }
+
+        $fromTime = strtotime($rental->arrival_date.' '.$rental->arrival_time);
+        $time = round(abs($fromTime - $toTime) / 60,2);
+        $totalTime = ceil($time * (1/60));
+
+        $amountPerHour = $totalTime * $setting->price_hour;
+        $amountIncrement = $amountPerHour + $room->increment;
+
+        $amount += $amountIncrement;
+      }
 
       return $amount;
     }
