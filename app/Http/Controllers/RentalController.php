@@ -205,14 +205,18 @@ class RentalController extends Controller {
         return response()->validation_error('Debe confirmar reservación');
     }
 
-    if($rental->arrival_date == $date) {
-        return response()->validation_error('La habitación debe tener al menos un día para dar salida');
-    }
-
     $room = $rental->findRoom($roomId);
 
     if(!$room) {
         return response()->validation_error('Habitación no encontrada');
+    }
+
+    if(
+        $rental->arrival_date == $date || 
+        $room->pivot->check_in != null &&  
+        $room->pivot->check_in == $date
+    ) {
+        return response()->validation_error('La habitación debe tener al menos un día para dar salida');
     }
 
     $room->pivot->check_out = $date;
@@ -222,7 +226,43 @@ class RentalController extends Controller {
 
     $rental->moveDispatch();
 
-    return response()->json(['message' => 'Salida de Habitación registrada']);
+    return response()->json(['message' => 'Salida de habitación confirmada']);
+  }
+
+  public function checkoutRoomHour(Request $request, $rentalId, $roomId) {
+    $rental = Rental::findOrFail($rentalId);
+
+    if($rental->isCheckout()) {
+        return response()->validation_error('El hospedaje ya tiene salida');
+    }
+
+    if($rental->type == 'days') {
+        return response()->validation_error('El hospedaje debe ser por horas');
+    }
+
+    if($rental->reservation) {
+        return response()->validation_error('Debe confirmar reservación');
+    }
+
+    $room = $rental->findRoom($roomId);
+
+    if(!$room) {
+        return response()->validation_error('Habitación no encontrada');
+    }
+
+    $room->pivot->check_timeout = $rental->departure_time;
+
+    if($rental->departure_date != null) {
+        $room->pivot->check_out = $rental->departure_date;
+    } else {
+        $room->pivot->check_out = $rental->arrival_date;
+    }
+
+    $room->pivot->save();
+    $room->state = 'limpieza';
+    $room->save();
+
+    return response()->json(['message' => 'Salida de habitación confirmada']);
   }
 
  
