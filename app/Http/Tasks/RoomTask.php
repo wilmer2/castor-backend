@@ -106,8 +106,6 @@ class RoomTask {
           'rooms' => $rooms,
           'select' => true
         ];
-
-        return $rooms;
     }
 
     return $rooms;
@@ -203,7 +201,7 @@ class RoomTask {
   }
 
   public function setDepartureTime() {
-    if($this->departure_time == '') {
+    if($this->departure_time == '' || $this->departure_time == null) {
         $setting = getSetting();
 
         $this->departure_time = sumHour($this->arrival_time, $setting->time_minimum);
