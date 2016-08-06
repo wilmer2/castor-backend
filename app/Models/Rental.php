@@ -9,9 +9,9 @@ use App\Events\RentalWasAssigned;
 class Rental extends Ardent {
   
   public $autoPurgeRedundantAttributes = true;
+  public $extra_hour = null;
   protected $rooms_validation = [];
   protected $old_departure = null;
-  protected $extra_hour = null;
 
   protected $fillable = [
     'client_id',
@@ -206,7 +206,6 @@ class Rental extends Ardent {
   public function setDepartureTime($hourFrom) {
     if($this->extra_hour != null) {
         $this->departure_time = sumHour($hourFrom, $this->extra_hour);
-        $this->extra_hour = null;
     } else {
         $setting = getSetting();
 
