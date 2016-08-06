@@ -211,6 +211,10 @@ class RentalController extends Controller {
         return response()->validation_error('Habitación no encontrada');
     }
 
+    if($room->pivot->check_out != null) {
+        return response()->validation_error('Habitación ya tiene salida');
+    }
+
     if(
         $rental->arrival_date == $date || 
         $room->pivot->check_in != null &&  
@@ -225,6 +229,7 @@ class RentalController extends Controller {
     $room->save();
 
     $rental->moveDispatch();
+    $rental->confirmCheckoutRoom();
 
     return response()->json(['message' => 'Salida de habitación confirmada']);
   }
@@ -250,6 +255,10 @@ class RentalController extends Controller {
         return response()->validation_error('Habitación no encontrada');
     }
 
+    if($room->pivot->check_out != null) {
+        return response()->validation_error('Habitación ya tiene salida');
+    }
+
     $room->pivot->check_timeout = $rental->departure_time;
 
     if($rental->departure_date != null) {
@@ -262,12 +271,35 @@ class RentalController extends Controller {
     $room->state = 'limpieza';
     $room->save();
 
+    $rental->confirmCheckoutRoom();
+
     return response()->json(['message' => 'Salida de habitación confirmada']);
   }
 
+  /*public function renovateHour(Request $request, $rentalId) {
+    $rental = Rental::findOrFail($rentalId);
+
+    if($rental->isCheckout()) {
+        return response()->validation_error('El hospedaje ya tiene salida');
+    }
+
+    $inputData = $request->only('renovate_hour', 'room_ids', 'discount');
+
+    if($rental->update($inputData)) {
+        $newRecord = new Record();
+        $rental->rooms()->sync($inputData['room_ids'], false);
+        $rental->setRecord($newRecord);
+        $rental->moveDispatch();
+
+        return response()->json(['message' => 'Habitación renovada']);
+    } else {
+        return response()->validation_error($rental->errors());
+    }
+  }*/
+
  
-  public function checkoutRoom(Request $request, $rentalId, $roomId) {
-    /*$rental = Rental::findOrFail($rentalId);
+  /*public function checkoutRoom(Request $request, $rentalId, $roomId) {
+    $rental = Rental::findOrFail($rentalId);
     $date = currentDate();
 
     if($rental->type == 'hours' || $rental->reservation) {
@@ -295,8 +327,8 @@ class RentalController extends Controller {
     $room->pivot->save();
     $rental->moveDispatch();
 
-    return response()->json(['message' => 'Salida de habitación confirmada']);*/
-  }
+    return response()->json(['message' => 'Salida de habitación confirmada']);
+  }*/
 
   /*public function checkout(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
