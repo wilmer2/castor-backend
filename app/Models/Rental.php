@@ -56,6 +56,7 @@ class Rental extends Ardent {
     'departure_time.date_format' => 'La hora de salida es inválida',
     'type.required' => 'El tipo es obligatorio',
     'type.in' => 'El tipo es inválido',
+    'renovate_hour.required' => 'La hora de renovacion es obligatoria',
     'renovate_hour.in' => 'La hora para renovar es inválida',
     'payment_type.required' => 'El tipo de pago es obligatorio',
     'payment_type.in' => 'El tipo de pago no esta entre la opciones',
@@ -81,7 +82,7 @@ class Rental extends Ardent {
   public function rooms() {
     return $this->belongsToMany(Room::class)
      ->withTimestamps()
-     ->withPivot('check_in', 'check_out');
+     ->withPivot('check_in', 'check_out', 'check_timeout');
   }
   
   public function move() {
@@ -307,18 +308,33 @@ class Rental extends Ardent {
         $record->first = 1;
     }
 
+    $this->setRecord($record);
+  }
+
+  public function setRecord($record) {
     if($this->departure_time == null) {
         $record->departure_time = createHour('12:00:00');
     } else {
         $record->departure_time = $this->departure_time;
     }
 
+    $record->arrival_date = $this->arrival_date;
     $record->departure_date = $this->departure_date;
     
     $record->type = $this->type;
     $record->rental_id = $this->id;
 
     $record->save();
+  }
+
+  public function confirmCheckoutRoom() {
+     $enabledRooms = $this->rooms()
+     ->wherePivot('check_out', null);
+
+     if($enabledRooms->count() == 0) {
+        $this->checkout = 1;
+        $this->forceSave();
+     }
   }
 
   /** Model Querys */
