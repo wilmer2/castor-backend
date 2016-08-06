@@ -17,6 +17,7 @@ class CreateRentalRoomPivotTable extends Migration
             $table->foreign('rental_id')->references('id')->on('rentals')->onDelete('cascade');
             $table->integer('room_id')->unsigned()->index();
             $table->foreign('room_id')->references('id')->on('rooms')->onDelete('cascade');
+            $table->time('check_timeout')->nullable();
             $table->date('check_in')->nullable();
             $table->date('check_out')->nullable();
             $table->primary(['rental_id', 'room_id']);
