@@ -79,8 +79,9 @@ class RentalValidator {
     $departureTime,
     $dateFrom,
     $departureDate,
-    $rentalId
+    $rentalId = null
   ) {  
+      
       if($timeFrom >= $departureTime) {
           $availableHourRooms = Room::availableHourIntervalRoom(
              $dateFrom, 
