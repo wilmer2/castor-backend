@@ -31,13 +31,18 @@ class CalculatePayment
       $rooms = $rental->rooms()
       ->selectRooms()
       ->get();
-
+      
       if($rental->type == 'days') {
-          $amountRental = $this->calculateAmountDay($rental, $setting, $rooms);
+          if($rental->extra_hour != null) {
+             $amountRental = $this->calculateAmountDayTimeExtra($rental, $setting);
+          } else {
+             $amountRental = $this->calculateAmountDay($rental, $setting, $rooms);
+          }
+          
       } else {
           $amountRental = $this->calculateAmountTime($rental, $setting, $rooms);
       }
-      
+
       $amount = $this->calculateDiscount($amountRental, $rental->discount);
       $impost = $setting->calculateImpost($amount);
       $total = $amount + $impost;
@@ -47,7 +52,6 @@ class CalculatePayment
       $rental->amount_total = $total;
 
       $rental->forceSave();
-      
     }
 
     public function calculateAmountDay($rental, $setting, $rooms) {
@@ -96,7 +100,7 @@ class CalculatePayment
             $departureTime = $rental->departure_time;
         }
 
-        if($rental->departure_time != null) {
+        if($rental->departure_date != null) {
             $toTime = strtotime($rental->departure_date.' '.$departureTime);
         } else {
             $toTime = strtotime($rental->arrival_date.' '.$departureTime);  
@@ -113,6 +117,16 @@ class CalculatePayment
       }
 
       return $amount;
+    }
+
+    public function calculateAmountDayTimeExtra($rental, $setting) {
+      $totalTime = explode(':', $rental->extra_hour);
+      $extraHours = $totalTime[0];
+      $amountPerHour = $extraHours * $setting->price_hour;
+      $amountAccumulative = $rental->amount + $amountPerHour; 
+
+      $rental->extra_hour = null;
+      return $amountAccumulative;
     }
 
     public function calculateDiscount($amount, $discount) {
