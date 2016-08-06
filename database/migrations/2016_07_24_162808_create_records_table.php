@@ -17,6 +17,7 @@ class CreateRecordsTable extends Migration
             $table->integer('rental_id')->unsigned();
             $table->string('type');
             $table->boolean('first');
+            $table->date('arrival_date');
             $table->date('departure_date')->nullable();
             $table->time('departure_time');
             
