@@ -64,25 +64,32 @@ class CalculatePayment
       $amount = 0;  
 
       foreach ($rooms as $room) {
-
-          if($room->pivot->check_in != null) {
-              $startDate = Carbon::parse($room->pivot->check_in);
-          } else {
-              $startDate = Carbon::parse($rental->arrival_date);
-          }
+        if($room->pivot->check_timeout == null) {
+            if($room->pivot->check_in != null) {
+                $startDate = Carbon::parse($room->pivot->check_in);
+            } else {
+                $startDate = Carbon::parse($rental->arrival_date);
+            }
              
-          if($room->pivot->check_out != null) {
-              $checkOut = Carbon::parse($room->pivot->check_out);
+            if($room->pivot->check_out != null) {
+                $checkOut = Carbon::parse($room->pivot->check_out);
 
-              $days = $startDate->diff($checkOut)->days;
-          } else {
-              $days = $startDate->diff($endDate)->days;
-          }
+                $days = $startDate->diff($checkOut)->days;
+            } else {
+                $days = $startDate->diff($endDate)->days;
+            }
           
-          $amountExtra = $room->increment + $setting->price_day;
-          $amountPerRoom = $amountExtra * $days;
+            $amountExtra = $room->increment + $setting->price_day;
+            $amountPerRoom = $amountExtra * $days;
+        } else {
+            $fromTime = strtotime($rental->arrival_date.' '.$rental->arrival_time);
+            $toTime = strtotime($room->pivot->check_out.' '.$room->pivot->check_timeout);
+            $increment = $room->increment;
 
-          $amount += $amountPerRoom;
+            $amountPerRoom = $this->calculateAmountTimePerRoom($fromTime, $toTime, $setting, $increment);
+        }  
+
+        $amount += $amountPerRoom;
       }
 
       return $amount;
@@ -93,7 +100,6 @@ class CalculatePayment
 
       foreach ($rooms as $room) {
         
-
         if($room->pivot->check_timeout != null) {
             $departureTime = $room->pivot->check_timeout;
         } else {
@@ -107,16 +113,23 @@ class CalculatePayment
         }
 
         $fromTime = strtotime($rental->arrival_date.' '.$rental->arrival_time);
-        $time = round(abs($fromTime - $toTime) / 60,2);
-        $totalTime = ceil($time * (1/60));
+        $increment = $room->increment;
 
-        $amountPerHour = $totalTime * $setting->price_hour;
-        $amountIncrement = $amountPerHour + $room->increment;
+        $amountPerHour = $this->calculateAmountTimePerRoom($fromTime, $toTime, $setting, $increment);
 
-        $amount += $amountIncrement;
+        $amount += $amountPerHour;
       }
 
       return $amount;
+    }
+
+    public function calculateAmountTimePerRoom($fromTime, $toTime, $setting, $increment) {
+      $totalTime = calculateTotalHours($fromTime, $toTime);
+      
+      $amountPerHour = $totalTime * $setting->price_hour;
+      $amountIncrement = $amountPerHour + $increment;
+
+      return $amountIncrement;
     }
 
     public function calculateAmountDayTimeExtra($rental, $setting) {
@@ -126,6 +139,7 @@ class CalculatePayment
       $amountAccumulative = $rental->amount + $amountPerHour; 
 
       $rental->extra_hour = null;
+
       return $amountAccumulative;
     }
 
