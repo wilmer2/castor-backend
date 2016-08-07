@@ -27,7 +27,7 @@ class Room extends Ardent {
    public function rentals() {
      return $this->belongsToMany(Rental::class)
      ->withTimestamps()
-     ->withPivot('check_out', 'check_in');
+     ->withPivot('check_out', 'check_in', 'check_timeout');
    }
 
    /** Model Querys */
@@ -60,7 +60,6 @@ class Room extends Ardent {
            $rentalId
         ) {
 
-
           $q->where('arrival_date', '<', $departureDate)
               ->where('departure_date', '>=', $departureDate)
               ->where('checkout', 0);
@@ -84,10 +83,9 @@ class Room extends Ardent {
                     ->where('arrival_time', '<=', '12:00')
                     ->where('checkout', 0);
 
-                if($rentalId != null) {
+                 if($rentalId != null) {
                     $q->where('id', '<>', $rentalId);
-                }
-
+                 }
               })
               ->orWhere(function($q) use ($arrivalDate, $departureDate, $rentalId) {
                 $q->where('arrival_date', '<=', $arrivalDate)
@@ -99,18 +97,30 @@ class Room extends Ardent {
                     $q->where('id', '<>', $rentalId);
                 }
 
+              })
+              ->orWhere(function ($q) use ($arrivalDate, $departureDate, $rentalId) {
+                  $q->where('arrival_date', '>', $arrivalDate)
+                     ->where('arrival_date', '<', $departureDate)
+                     ->where('type', 'hours')
+                     ->where('checkout', 0);                  
+
+                  if($rentalId != null) {
+                      $q->where('id', '<>', $rentalId);
+                  }
               });
 
-          
-          if($arrivalHour != null) {
-             $q->orWhere(function($q) use ($arrivalDate, $arrivalHour, $rentalId) {
+              if($arrivalHour == null) {
+                  $arrivalHour = '12:00';
+              } 
+
+              $q->orWhere(function($q) use ($arrivalDate, $arrivalHour, $rentalId) {
                 $q->where('departure_date', $arrivalDate)
                   ->where('departure_time', '>=', $arrivalHour)
                   ->where('checkout', 0);
 
-                 if($rentalId != null) {
-                   $q->where('id', '<>', $rentalId);
-                 }
+                  if($rentalId != null) {
+                    $q->where('id', '<>', $rentalId);
+                  }
 
               })
               ->orWhere(function ($q) use ($arrivalDate, $arrivalHour, $rentalId) {  
@@ -124,47 +134,36 @@ class Room extends Ardent {
                   }
                 })
                 ->orWhere(function ($q) use ($arrivalDate, $arrivalHour, $rentalId) {
-                   $q->where('arrival_date', $arrivalDate)
-                     ->where('departure_time', '>=', $arrivalHour)
-                     ->where('type', 'hours')
-                     ->where('checkout', 0);
+                    $q->where('arrival_date', $arrivalDate)
+                      ->where('departure_time', '>=', $arrivalHour)
+                      ->where('type', 'hours')
+                      ->where('checkout', 0);
 
                   if($rentalId != null) {
                       $q->where('id', '<>', $rentalId);
                   }
                 })
                 ->orWhere(function ($q) use ($departureDate, $rentalId) {
-                   $q->where('arrival_date', $departureDate)
-                     ->where('arrival_time', '<=', '12:00')
-                     ->where('type', 'hours')
-                     ->where('checkout', 0);
+                    $q->where('arrival_date', $departureDate)
+                      ->where('arrival_time', '<=', '12:00')
+                      ->where('type', 'hours')
+                      ->where('checkout', 0);
 
-                   if($rentalId != null) {
+                    if($rentalId != null) {
                       $q->where('id', '<>', $rentalId);
-                   }
+                    }
                 })
                 ->orWhere(function ($q) use ($departureDate, $rentalId) {
-                   $q->where('arrival_date', $departureDate)
-                     ->where('departure_time', '<=', '12:00')
-                     ->where('type', 'hours')
-                     ->whereNull('departure_date')
-                     ->where('checkout', 0);
+                    $q->where('arrival_date', $departureDate)
+                      ->where('departure_time', '<=', '12:00')
+                      ->where('type', 'hours')
+                      ->whereNull('departure_date')
+                      ->where('checkout', 0);
 
-                   if($rentalId != null) {
+                    if($rentalId != null) {
                       $q->where('id', '<>', $rentalId);
-                   }
-                })
-                ->orWhere(function ($q) use ($arrivalDate, $departureDate, $rentalId) {
-                  $q->where('arrival_date', '>', $arrivalDate)
-                     ->where('arrival_date', '<', $departureDate)
-                     ->where('type', 'hours')
-                     ->where('checkout', 0);
-
-                  if($rentalId != null) {
-                      $q->where('id', '<>', $rentalId);
-                  }
+                    }
                 });
-          }
 
         });
    }
