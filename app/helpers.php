@@ -46,6 +46,13 @@ function syncData($roomIds, $date) {
   return $syncData;
 }
 
+function calculateTotalHours($fromTime, $toTime) {
+  $time = round(abs($fromTime - $toTime) / 60,2);
+  $totalTime = ceil($time * (1/60));
+
+  return $totalTime;
+}
+
 function currentUser() {
   return auth()->user();
 }
