@@ -46,11 +46,27 @@ function syncData($roomIds, $date) {
   return $syncData;
 }
 
+function syncDataCheckout($roomIds, $date) {
+  $pivotData = array_fill(0, count($roomIds), ['check_out' => $date]);
+  $syncDataCheckout = array_combine($roomIds, $pivotData);
+
+  return $syncDataCheckout;
+}
+
 function calculateTotalHours($fromTime, $toTime) {
   $time = round(abs($fromTime - $toTime) / 60,2);
   $totalTime = ceil($time * (1/60));
 
   return $totalTime;
+}
+
+function diffDays($fromDate, $toDate) {
+  $fromDate = new Carbon($fromDate);
+  $toDate = new Carbon($toDate);
+
+  $diff = $fromDate->diff($toDate)->days;
+
+  return $diff;
 }
 
 function currentUser() {
