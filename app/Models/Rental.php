@@ -12,6 +12,7 @@ class Rental extends Ardent {
   public $extra_hour = null;
   protected $rooms_validation = [];
   protected $old_departure = null;
+  protected $search_date = null;
 
   protected $fillable = [
     'client_id',
@@ -113,7 +114,7 @@ class Rental extends Ardent {
         $valid = false;
     }
 
-    if(!$this->isValidRenovateDate($rentalValidator)) {
+    if(!$this->isValidRenovateDate()) {
         $this->validationErrors->add('departure_date', 'La fecha para renovar deber ser mayor a la de salida');
         $valid = false;
     }
@@ -137,17 +138,12 @@ class Rental extends Ardent {
     }
   }
 
-  public function isValidRenovateDate($rentalValidator) {
-    $valid = true;
-    
-    if($this->old_departure != null) {
-        $valid = $rentalValidator->isValidBetweenDates(
-           $this->old_departure, 
-           $this->departure_date
-        );
-    }
+  public function isValidRenovateDate() {
+    if($this->old_departure != null && $this->old_departure > $this->departure_date) {
+        return false;
+    } 
 
-    return $valid;
+    return true;
   }
 
   public function isValidTimeRooms($rentalValidator) {
@@ -177,7 +173,7 @@ class Rental extends Ardent {
            $this->arrival_date,
            $this->departure_date,
            $hourFrom,
-           $this->old_departure,
+           $this->search_date,
            $this->id
         );
      }
@@ -239,6 +235,8 @@ class Rental extends Ardent {
     } else {
         $this->old_departure = $this->departure_date;
     }
+    
+    $this->search_date = currentDate();
   }
 
   public function isCheckout() {
@@ -327,13 +325,55 @@ class Rental extends Ardent {
   }
 
   public function confirmCheckoutRoom() {
-     $enabledRooms = $this->rooms()
-     ->wherePivot('check_out', null);
+     $enabledRooms = $this->getEnabledRooms();
 
      if($enabledRooms->count() == 0) {
         $this->checkout = 1;
         $this->forceSave();
      }
+  }
+
+  public function checkRoomsRenovateDate($renovateRoomIds) {
+    $diffDays = diffDays($this->arrival_date, $this->departure_date);
+    $roomCheckout = $this->getRoomsIdCheckout();
+
+    if($diffDays == 1) {
+        $allRooms = array_collapse([$renovateRoomIds, $roomCheckout]);
+        
+        $this->syncRooms($allRooms, true);
+    } else {
+        $date = currentDate();
+
+        $roomsEnabled = $this->getEnabledRooms()
+        ->lists('id')
+        ->toArray();
+
+        $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
+
+        if(count($oldRoomIds) > 0) {
+            if($date == $this->arrival_date) {
+                $this->syncRooms($roomCheckout, true);
+                $this->syncRooms($renovateRoomIds);
+            } else {
+                $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
+                $newRoomsSync = syncData($newRoomIds, $date);
+                $oldRoomsSync = syncDataCheckout($oldRoomIds, $date);
+            
+                $this->syncRooms($newRoomsSync);
+                $this->syncRooms($oldRoomsSync);
+            }
+
+        } else {
+            $this->syncRooms($renovateRoomIds);
+        }
+
+        $this->detachSameCheckinCheckout();
+    }
+          
+  }
+
+  public function syncRooms($roomIds, $change = false) {
+     $this->rooms()->sync($roomIds, $change);
   }
 
   /** Model Querys */
@@ -350,6 +390,11 @@ class Rental extends Ardent {
     ->toArray();
   }
 
+  public function getEnabledRooms() {
+    return $this->rooms()
+    ->wherePivot('check_out', null);
+  }
+
   public function getRoomsCheckout() {
     return $this->rooms()
     ->wherePivot('check_out', '<>', null);
@@ -359,5 +404,16 @@ class Rental extends Ardent {
     return $this->getRoomsCheckout()
     ->lists('id')
     ->toArray();
+  }
+
+  public function detachSameCheckinCheckout() {
+    $roomsDetach = $this->rooms()
+    ->whereRaw('check_in = check_out')
+    ->lists('id')
+    ->toArray();
+
+    if(count($roomsDetach) > 0) {
+        $this->rooms()->detach($roomsDetach);
+    } 
   }
 }
