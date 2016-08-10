@@ -327,11 +327,12 @@ class RentalController extends Controller {
     $rental->setOldDeparture();
 
     $inputData = $request->only('departure_date', 'room_ids');
+    $staticRoomIds = $request->get('static_rooms');
 
     if($rental->update($inputData)) {
         $newRecord = new Record();
 
-        $rental->checkRoomsRenovateDate($inputData['room_ids']);
+        $rental->checkRoomsRenovateDate($inputData['room_ids'], $staticRoomIds);
         $rental->setRecord($newRecord);
         $rental->moveDispatch();
 
