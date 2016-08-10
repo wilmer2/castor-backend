@@ -333,7 +333,23 @@ class Rental extends Ardent {
      }
   }
 
-  public function checkRoomsRenovateDate($renovateRoomIds) {
+  public function checkRoomsRenovateDate($renovateRoomIds, $staticRoomIds) {
+     if(count($staticRoomIds) > 0) {
+        $roomCheckout = $this->getRoomsIdCheckout();
+        $this->checkEnabledRooms($renovateRoomIds, $roomCheckout);
+        
+        $staticRooms = syncDataCheckout($staticRoomIds, $this->old_departure);
+
+        $this->syncRooms($staticRooms);
+
+     } else {
+        $this->renovateDateSync($renovateRoomIds);
+     }
+
+     $this->detachSameCheckinCheckout();
+  }
+
+  public function renovateDateSync($renovateRoomIds) {
     $diffDays = diffDays($this->arrival_date, $this->departure_date);
     $roomCheckout = $this->getRoomsIdCheckout();
 
@@ -342,34 +358,35 @@ class Rental extends Ardent {
         
         $this->syncRooms($allRooms, true);
     } else {
-        $date = currentDate();
-
-        $roomsEnabled = $this->getEnabledRooms()
-        ->lists('id')
-        ->toArray();
-
-        $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
-
-        if(count($oldRoomIds) > 0) {
-            if($date == $this->arrival_date) {
-                $this->syncRooms($roomCheckout, true);
-                $this->syncRooms($renovateRoomIds);
-            } else {
-                $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
-                $newRoomsSync = syncData($newRoomIds, $date);
-                $oldRoomsSync = syncDataCheckout($oldRoomIds, $date);
-            
-                $this->syncRooms($newRoomsSync);
-                $this->syncRooms($oldRoomsSync);
-            }
-
-        } else {
-            $this->syncRooms($renovateRoomIds);
-        }
-
-        $this->detachSameCheckinCheckout();
+        $this->checkEnabledRooms($renovateRoomIds, $roomCheckout);
     }
-          
+  }
+
+  public function checkEnabledRooms($renovateRoomIds, $roomCheckout) {
+    $date = currentDate();
+
+    $roomsEnabled = $this->getEnabledRooms()
+    ->lists('id')
+    ->toArray();
+
+    $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
+
+    if(count($oldRoomIds) > 0) {
+        if($date == $this->arrival_date) {
+            $this->syncRooms($roomCheckout, true);
+            $this->syncRooms($renovateRoomIds);
+        } else {
+            $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
+            $newRoomsSync = syncData($newRoomIds, $date);
+            $oldRoomsSync = syncDataCheckout($oldRoomIds, $date);
+            
+            $this->syncRooms($newRoomsSync);
+            $this->syncRooms($oldRoomsSync);
+          }
+
+    } else {
+        $this->syncRooms($renovateRoomIds);
+      }
   }
 
   public function syncRooms($roomIds, $change = false) {
