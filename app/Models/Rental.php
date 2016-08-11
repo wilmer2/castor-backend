@@ -463,6 +463,7 @@ class Rental extends Ardent {
   public function detachSameCheckinCheckout() {
     $roomsDetach = $this->rooms()
     ->whereRaw('check_in = check_out')
+    ->wherePivot('check_timein', null)
     ->lists('id')
     ->toArray();
 
