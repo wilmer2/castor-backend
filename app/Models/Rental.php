@@ -83,7 +83,7 @@ class Rental extends Ardent {
   public function rooms() {
     return $this->belongsToMany(Room::class)
      ->withTimestamps()
-     ->withPivot('check_in', 'check_out', 'check_timeout');
+     ->withPivot('check_in', 'check_out', 'check_timeout', 'check_timein');
   }
   
   public function move() {
@@ -333,6 +333,32 @@ class Rental extends Ardent {
      }
   }
 
+  public function checkRoomsRenovateHour($renovateRoomIds, $departureTime, $departureDate) {
+    $date = currentDate();
+    $arrivalDate = $this->arrival_date;
+
+    if($this->type == 'hours') {
+        $roomsEnabled = $this->getEnabledRoomsId();
+        $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
+
+        if(count($oldRoomIds) > 0) {
+            $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
+
+            if($departureDate == null) {
+               $departureDate = $this->arrival_date;
+            }
+
+            $newRoomsSyncTime = syncCheckinHour($newRoomIds, $departureDate, $departureTime);
+            $oldRoomsSyncTime = syncCheckoutHour($oldRoomIds, $departureDate, $departureTime);
+
+            $this->syncRooms($newRoomsSyncTime);
+            $this->syncRooms($oldRoomsSyncTime);
+        } else {
+            $this->syncRooms($roomsEnabled);
+        }
+    }
+  }
+
   public function checkRoomsRenovateDate($renovateRoomIds, $staticRoomIds) {
      if(count($staticRoomIds) > 0) {
         $roomCheckout = $this->getRoomsIdCheckout();
@@ -365,9 +391,7 @@ class Rental extends Ardent {
   public function checkEnabledRooms($renovateRoomIds, $roomCheckout) {
     $date = currentDate();
 
-    $roomsEnabled = $this->getEnabledRooms()
-    ->lists('id')
-    ->toArray();
+    $roomsEnabled = $this->getEnabledRoomsId();
 
     $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
 
@@ -415,6 +439,12 @@ class Rental extends Ardent {
   public function getRoomsCheckout() {
     return $this->rooms()
     ->wherePivot('check_out', '<>', null);
+  }
+
+  public function getEnabledRoomsId() {
+    return $this->getEnabledRooms()
+    ->lists('id')
+    ->toArray();
   }
 
   public function getRoomsIdCheckout() {
