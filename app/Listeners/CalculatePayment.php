@@ -136,8 +136,13 @@ class CalculatePayment
       $totalTime = explode(':', $rental->extra_hour);
       $extraHours = $totalTime[0];
       $amountPerHour = $extraHours * $setting->price_hour;
-      $amountAccumulative = $rental->amount + $amountPerHour; 
 
+      $countRooms = $rental->getEnabledRooms()
+      ->count();
+
+      $amountTotalRooms = $countRooms * $amountPerHour;
+
+      $amountAccumulative = $rental->amount + $amountTotalRooms; 
       $rental->extra_hour = null;
 
       return $amountAccumulative;
