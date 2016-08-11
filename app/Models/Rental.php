@@ -335,12 +335,10 @@ class Rental extends Ardent {
 
   public function checkRoomsRenovateHour($renovateRoomIds, $departureTime, $departureDate) {
     $date = currentDate();
-    $arrivalDate = $this->arrival_date;
+    $roomsEnabled = $this->getEnabledRoomsId();
+    $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
 
     if($this->type == 'hours') {
-        $roomsEnabled = $this->getEnabledRoomsId();
-        $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
-
         if(count($oldRoomIds) > 0) {
             $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
 
@@ -354,7 +352,16 @@ class Rental extends Ardent {
             $this->syncRooms($newRoomsSyncTime);
             $this->syncRooms($oldRoomsSyncTime);
         } else {
-            $this->syncRooms($roomsEnabled);
+            $this->syncRooms($renovateRoomIds);
+        }
+    } else {
+        if(count($oldRoomIds) > 0) {
+           $oldRoomsSyncDate = syncDataCheckout($oldRoomIds, $this->departure_date);
+
+           $this->syncRooms($renovateRoomIds);
+           $this->syncRooms($oldRoomsSyncDate);
+        } else {
+            $this->syncRooms($renovateRoomIds);
         }
     }
   }
