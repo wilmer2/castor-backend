@@ -296,11 +296,18 @@ class RentalController extends Controller {
     }
 
     $inputData = $request->only('renovate_hour', 'room_ids', 'discount');
+    $departureTime = $rental->departure_time;
+    $departureDate = $rental->departure_date;
 
     if($rental->update($inputData)) {
         $newRecord = new Record();
         
-        $rental->syncRooms($inputData['room_ids']);
+        $rental->checkRoomsRenovateHour(
+            $inputData['room_ids'],  
+            $departureTime, 
+            $departureDate
+        );
+
         $rental->setRecord($newRecord);
         $rental->moveDispatch();
 
