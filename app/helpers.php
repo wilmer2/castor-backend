@@ -53,6 +53,20 @@ function syncDataCheckout($roomIds, $date) {
   return $syncDataCheckout;
 }
 
+function syncCheckinHour($roomIds, $date, $time) {
+  $pivotData = array_fill(0, count($roomIds), ['check_timein' => $time, 'check_in' => $date]);
+  $syncDataCheckTimein = array_combine($roomIds, $pivotData);
+
+  return $syncDataCheckTimein;
+}
+
+function syncCheckoutHour($roomIds, $date, $time) {
+  $pivotData = array_fill(0, count($roomIds), ['check_timeout' => $time, 'check_out' => $date]);
+  $syncDataCheckTimeout = array_combine($roomIds, $pivotData);
+
+  return $syncDataCheckTimeout;
+}
+
 function calculateTotalHours($fromTime, $toTime) {
   $time = round(abs($fromTime - $toTime) / 60,2);
   $totalTime = ceil($time * (1/60));
