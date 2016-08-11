@@ -46,7 +46,8 @@ class CalculatePayment
       $amount = $this->calculateDiscount($amountRental, $rental->discount);
       $impost = $setting->calculateImpost($amount);
       $total = $amount + $impost;
-
+      
+      $rental->extra_hour = null;
       $rental->amount = $amount;
       $rental->amount_impost = $impost;
       $rental->amount_total = $total;
@@ -82,7 +83,13 @@ class CalculatePayment
             $amountExtra = $room->increment + $setting->price_day;
             $amountPerRoom = $amountExtra * $days;
         } else {
-            $fromTime = strtotime($rental->arrival_date.' '.$rental->arrival_time);
+
+            if($room->pivot->check_timein != null) {
+                $fromTime = strtotime($room->pivot->check_in.' '.$room->pivot->check_timein);
+            } else {
+                $fromTime = strtotime($rental->arrival_date.' '.$rental->arrival_time);
+            }
+
             $toTime = strtotime($room->pivot->check_out.' '.$room->pivot->check_timeout);
             $increment = $room->increment;
 
@@ -112,9 +119,13 @@ class CalculatePayment
             $toTime = strtotime($rental->arrival_date.' '.$departureTime);  
         }
 
-        $fromTime = strtotime($rental->arrival_date.' '.$rental->arrival_time);
-        $increment = $room->increment;
+        if($room->pivot->check_timein != null) {
+            $fromTime = strtotime($room->pivot->check_in.' '.$room->pivot->check_timein);
+        } else {
+            $fromTime = strtotime($rental->arrival_date.' '.$rental->arrival_time);
+        }
 
+        $increment = $room->increment;
         $amountPerHour = $this->calculateAmountTimePerRoom($fromTime, $toTime, $setting, $increment);
 
         $amount += $amountPerHour;
@@ -141,9 +152,7 @@ class CalculatePayment
       ->count();
 
       $amountTotalRooms = $countRooms * $amountPerHour;
-
       $amountAccumulative = $rental->amount + $amountTotalRooms; 
-      $rental->extra_hour = null;
 
       return $amountAccumulative;
     }
