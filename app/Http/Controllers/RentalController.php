@@ -398,5 +398,17 @@ class RentalController extends Controller {
     return response()->json(['message' => 'Hospedaje cancelado']);
   }
 
+  public function delete(Request $request, $rentalId) {
+    $rental = Rental::findOrFail($rentalId);
+
+    if($rental->state != 'cancelado') {
+        return response()->validation_error('El hospedaje no puede ser borrado');
+    }
+
+    $rental->delete();
+
+    return response(['message' => 'El hospedaje ha sido borrado']);
+  }
+
   
 }
