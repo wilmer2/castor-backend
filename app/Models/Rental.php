@@ -460,6 +460,42 @@ class Rental extends Ardent {
     ->toArray();
   }
 
+  public function getRoomsCheckDate($date) {
+    return $this->rooms()
+    ->wherePivot('check_in', '>=', $date);
+  }
+
+  public function getRoomsCheckoutDate($date) {
+    return $this->rooms()
+    ->wherePivot('check_out', '>', $date);
+  }
+
+  public function changeCheckoutDate($date) {
+    $rooms = $this->getRoomsCheckoutDate($date);
+
+    if($rooms->count() > 0) {
+        $roomsCheckout = $rooms
+        ->lists('id')
+        ->toArray();
+
+        $syncRoomsCheckout = syncDataCheckout($roomsCheckout, $date);
+
+        $this->syncRooms($syncRoomsCheckout);
+    }
+  }
+
+  public function deleteCheckRoomsDate($date) {
+    $rooms = $this->getRoomsCheckDate($date);
+
+    if($rooms->count() > 0) {
+        $roomsRemove = $rooms
+        ->lists('id')
+        ->toArray();
+
+        $this->detachRooms($roomsRemove);
+    }
+  }
+
   public function detachSameCheckinCheckout() {
     $roomsDetach = $this->rooms()
     ->whereRaw('check_in = check_out')
@@ -468,7 +504,11 @@ class Rental extends Ardent {
     ->toArray();
 
     if(count($roomsDetach) > 0) {
-        $this->rooms()->detach($roomsDetach);
+        $this->detachRooms($roomsDetach);
     } 
+  }
+
+  public function detachRooms($roomIds) {
+      $this->rooms()->detach($roomIds);
   }
 }
