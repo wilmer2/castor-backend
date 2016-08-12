@@ -19,14 +19,18 @@ Route::put('rooms/{roomId}', 'RoomController@update');
 
 //Route Rental
 Route::post('rentals', 'RentalController@store');
-
-//Route::post('rentals/{rentalId}/room/{roomId}/checkout', 'RentalController@checkoutRoom');
-//Route::post('rentals/{rentalId}/checkout', 'RentalController@checkout');
+Route::post('rentals/{rentalId}/checkout', 'RentalController@checkout');
 Route::post('rentals/{rentalId}/room/{roomId}/remove', 'RentalController@removeRoom');
 Route::post('rentals/{rentalId}/room/{roomId}/change', 'RentalController@changeRoom');
 Route::post('rentals/{rentalId}/add_rooms/date', 'RentalController@addRoomsDate');
-//Route::post('rentals/{rentalId}/change_rooms', 'RentalController@changeRooms');
-//Route::put('rentals/{rentalId}/renovate_hour', 'RentalController@renovateHour');
+Route::post('rentals/{rentalId}/add_rooms/hour', 'RentalController@addRoomsHour');
+Route::post('rentals/{rentalId}/room/{roomId}/checkout_date', 'RentalController@checkoutRoomDate');
+Route::post('rentals/{rentalId}/room/{roomId}/checkout_hour', 'RentalController@checkoutRoomHour');
+Route::put('rentals/{rentalId}/renovate_hour', 'RentalController@renovateHour');
+Route::put('rentals/{rentalId}/renovate_date', 'RentalController@renovateDate');
+Route::post('rentals/{rentalId}/cancel', 'RentalController@cancel');
+Route::delete('rentals/{rentalId}', 'RentalController@delete');
+
 
 
 
@@ -36,6 +40,58 @@ Route::get('rentals/{rentalId}/rooms_date', 'ReservationController@getAvailableD
 Route::get('rentals/{rentalId}/rooms_hour', 'ReservationController@getAvailableHourRoom');
 Route::put('rentals/{rentalId}/reservation_hour', 'ReservationController@updateReservationForHour');
 Route::put('rentals/{rentalId}/reservation_date', 'ReservationController@updateReservationForDate');
+
+
+
+
+/*use App\Models\Client;
+
+
+use App\Models\Rental;
+
+Route::get('test', function () {
+  $rental = Rental::find(1);
+
+  $rooms = $rental->rooms()
+  ->whereRaw('check_in = check_out')
+  ->lists('id')
+  ->toArray();
+
+  dd($rooms);
+});*/
+
+/*Route::get('test', function () {
+  $dogs = ['alegria' => ['age' => 12]];
+  $people = ['andrea' => ['age' => 20], 'kelly' => ['age' => 19]];
+  
+  $array = array_collapse([$dogs , $people]);
+  dd($array);
+});*/
+
+
+/*use Carbon\Carbon;
+
+Route::get('test', function () {
+   $date =  new Carbon(currentDate());
+   $afterDate = new Carbon(addDay($date));
+   $afterDate = new Carbon(addDay($afterDate));
+
+   $t = $date->diff($afterDate)->days;
+
+   dd($t, $date, $afterDate);
+});*/
+
+/*Route::get('test', function () {
+   $arr = [4 => ['age' => 23]];
+   $brr = [3 => ['age' => 22]];
+   
+
+   $n = array_keys($arr);
+
+   dd($union);
+});*/
+
+
 
 
 
