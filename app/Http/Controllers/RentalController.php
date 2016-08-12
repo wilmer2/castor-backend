@@ -379,9 +379,23 @@ class RentalController extends Controller {
     $rental->checkout_date = $date;
     $rental->checkout = 1;
     $rental->forceSave();
-     $rental->moveDispatch();
+    $rental->moveDispatch();
 
     return response()->json(['message' => 'Salida confirmada']);
+  }
+
+  public function cancel(Request $request, $rentalId) {
+    $rental = Rental::findOrFail($rentalId);
+
+    if($rental->checkout) {
+        return response()->validation_error('Hospedaje ya tiene salida');
+    }
+
+    $rental->state = 'cancelado';
+    $rental->checkout = 1;
+    $rental->forceSave();
+
+    return response()->json(['message' => 'Hospedaje cancelado']);
   }
 
   
