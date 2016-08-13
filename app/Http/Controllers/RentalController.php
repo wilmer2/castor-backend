@@ -30,8 +30,8 @@ class RentalController extends Controller {
     if($newRental->save()) {
         $newRental->rooms()->attach($inputData['room_ids']);
         $newRental->registerRecord();
-
         $newRental->moveDispatch();   
+
         return response()->json($newRental);
     } else {
         return response()->validation_error($newRental->errors());
