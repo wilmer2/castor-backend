@@ -38,6 +38,7 @@ class RentalController extends Controller {
     }
   }
 
+
    public function removeRoom(Request $request, $rentalId, $roomId) {
     $rental = Rental::findOrFail($rentalId);
 
@@ -68,6 +69,7 @@ class RentalController extends Controller {
     return response()->json(['message' => 'Habitación a sido removida']);
 
   }
+
 
   public function changeRoom(Request $request, $rentalId, $roomId) {
     $rental = Rental::findOrFail($rentalId);
@@ -122,6 +124,7 @@ class RentalController extends Controller {
     return response()->json(['message' => 'Habitación a sido cambiada']);
   }
 
+
   public function addRoomsDate(Request $request, RentalValidator $rentalValidator, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
     $date = currentDate();
@@ -168,6 +171,7 @@ class RentalController extends Controller {
     return response()->json(['message' => 'Habitaciones registradas']);
   }
 
+
   public function addRoomsHour(Request $request, RentalValidator $rentalValidator, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
 
@@ -206,6 +210,7 @@ class RentalController extends Controller {
 
     return response()->json(['message' => 'Habitaciones registradas']);
   }
+
 
   public function checkoutRoomDate(Request $request, $rentalId, $roomId) {
     $rental = Rental::findOrFail($rentalId);
@@ -252,6 +257,7 @@ class RentalController extends Controller {
     return response()->json(['message' => 'Salida de habitación confirmada']);
   }
 
+
   public function checkoutRoomHour(Request $request, $rentalId, $roomId) {
     $rental = Rental::findOrFail($rentalId);
 
@@ -294,6 +300,7 @@ class RentalController extends Controller {
     return response()->json(['message' => 'Salida de habitación confirmada']);
   }
 
+
   public function renovateHour(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
 
@@ -327,6 +334,7 @@ class RentalController extends Controller {
     }
   }
 
+
   public function renovateDate(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
     $date = currentDate();
@@ -359,6 +367,7 @@ class RentalController extends Controller {
     }
   }
 
+
   public function checkout(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
     $date = currentDate();
@@ -384,6 +393,7 @@ class RentalController extends Controller {
     return response()->json(['message' => 'Salida confirmada']);
   }
 
+
   public function cancel(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
 
@@ -391,12 +401,14 @@ class RentalController extends Controller {
         return response()->validation_error('Hospedaje ya tiene salida');
     }
 
+    $rental->cancelRooms();
     $rental->state = 'cancelado';
     $rental->checkout = 1;
     $rental->forceSave();
 
     return response()->json(['message' => 'Hospedaje cancelado']);
   }
+  
 
   public function delete(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
