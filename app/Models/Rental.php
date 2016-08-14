@@ -16,6 +16,7 @@ class Rental extends Ardent {
 
   protected $fillable = [
     'client_id',
+    'move_id',
     'arrival_time',
     'departure_time',
     'arrival_date',
@@ -435,7 +436,20 @@ class Rental extends Ardent {
               $room->save();
            }
         }
+  }
+
+  public function cancelRooms() {
+    if(!$this->reservation) {
+        $rooms = $this->getEnabledRooms()
+        ->get();
+
+        foreach ($rooms as $room) {
+          $room->state = 'disponible';
+          $room->save();
+        }
     }
+    
+  }
 
   public function syncRooms($roomIds, $change = false) {
      $this->rooms()->sync($roomIds, $change);
