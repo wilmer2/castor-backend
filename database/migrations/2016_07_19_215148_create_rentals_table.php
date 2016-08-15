@@ -22,7 +22,7 @@ class CreateRentalsTable extends Migration
             $table->date('departure_date')->nullable();
             $table->date('checkout_date')->nullable();
             $table->enum('payment_type', ['transferencia', 'punto', 'efectivo']);
-            $table->string('state')->default('conciliado');
+            $table->string('state');
             $table->enum('type', ['hours', 'days']);
             $table->float('amount');
             $table->float('amount_impost');
