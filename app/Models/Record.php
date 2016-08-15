@@ -15,7 +15,8 @@ class Record extends Ardent {
     'first',
     'payment_type',
     'amount',
-    'amount_total'
+    'amount_total',
+    'conciliate'
   ];
 
   public function rental() {
