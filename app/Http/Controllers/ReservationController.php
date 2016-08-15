@@ -21,12 +21,6 @@ class ReservationController extends Controller {
     $inputData = $request->all();
     $newReservation = new Rental($inputData);
 
-    if(isset($inputData['pay'])) {
-        $newReservation->state = 'conciliado';
-    } else {
-        $newReservation->state = 'por pagar';
-    }
-
     $newReservation->client_id = $client->id;
     $newReservation->reservation = 1;
 
@@ -41,6 +35,7 @@ class ReservationController extends Controller {
     }
   }
 
+
   public function updateReservationForHour(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
 
@@ -54,7 +49,7 @@ class ReservationController extends Controller {
     $inputData = $request->only('arrival_date', 'arrival_time', 'departure_time', 'room_ids');
      
     if($rental->update($inputData)) {
-        $rental->rooms()->sync($inputData['room_ids']);
+        $rental->syncRooms($inputData['room_ids'], true);
         $rental->registerRecord();
 
         $rental->moveDispatch();
@@ -64,6 +59,7 @@ class ReservationController extends Controller {
     }
     
   }
+  
 
   public function updateReservationForDate(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
@@ -78,7 +74,7 @@ class ReservationController extends Controller {
     $inputData = $request->only('arrival_date', 'arrival_time', 'departure_date', 'room_ids');
 
     if($rental->update($inputData)) {
-        $rental->rooms()->sync($inputData['room_ids']);
+        $rental->syncRooms($inputData['room_ids'], true);
         $rental->registerRecord();
         
         $rental->moveDispatch();
