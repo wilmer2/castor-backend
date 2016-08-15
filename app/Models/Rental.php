@@ -30,18 +30,20 @@ class Rental extends Ardent {
     'state',
     'reservation',
     'checkout',
-    'discount'
+    'discount',
+    'date_hour'
   ];
 
   public static $rules = [
     'room_ids' => 'required|exists:rooms,id',
-    'payment_type' => 'required|in:transferencia,credito,efectivo',
+    'payment_type' => 'required|in:transferencia,punto,efectivo',
     'type' => 'required|in:hours,days',
     'arrival_date' => 'required_if:reservation,1|date',
     'arrival_time' => 'required_if:reservation,1|date_format:H:i:s|date_hour',
     'departure_date' => 'required_if:type,days|date|after:arrival_date',
     'renovate_hour' => 'sometimes|required|in:01:00:00,02:00:00,03:00:00,04:00:00',
     'departure_time' => 'date_format:H:i:s',
+    'state' => 'required_if:reservation,1|in:conciliado,pendiente',
     'discount' => 'numeric'
   ];
 
@@ -65,7 +67,9 @@ class Rental extends Ardent {
     'extra_hour.date_format' =>  'La hora de finalización es inválida', 
     'room_ids.required' => 'Las habitaciones son obligatorias',
     'room_ids.exists' => 'Alguna de las habitaciones no existe ',
-    'discount.numeric' => 'El descuento debe ser un número'
+    'discount.numeric' => 'El descuento debe ser un número',
+    'state.required_if' => 'El estado de pago es obligatorio',
+    'state.in' => 'El estado de pago no es inválido'
   ];
 
   public function __construct($attributes = array()) {
@@ -306,18 +310,23 @@ class Rental extends Ardent {
         $record->first = 1;
     }
 
-    $this->setRecord($record);
+    $this->setRecord($record, $this->payment_type);
   }
 
-  public function setRecord($record) {
+  public function setRecord($record, $paymentType) {
     if($this->departure_time == null) {
         $record->departure_time = createHour('12:00:00');
     } else {
         $record->departure_time = $this->departure_time;
     }
 
+    if($this->move_id != null) {
+        $record->move_id = $this->move_id;
+    }
+
     $record->arrival_date = $this->arrival_date;
     $record->departure_date = $this->departure_date;
+    $record->payment_type = $paymentType;
     
     $record->type = $this->type;
     $record->rental_id = $this->id;
@@ -447,6 +456,17 @@ class Rental extends Ardent {
           $room->state = 'disponible';
           $room->save();
         }
+    } 
+  }
+
+  public function rentalDayWithRoomsHour() {
+    if(!$this->date_hour && $this->type == 'days') {
+        $roomsHourCheckout = $this->getHourRoomsCheckout();
+
+        if($roomsHourCheckout->count() > 0) {
+            $this->date_hour = 1;
+            $this->forceSave();
+        }
     }
     
   }
@@ -501,6 +521,11 @@ class Rental extends Ardent {
     ->wherePivot('check_out', '>', $date);
   }
 
+  public function getHourRoomsCheckout() {
+    return $this->rooms()
+    ->wherePivot('check_timeout', '<>', null);
+  }
+
   public function changeCheckoutDate($date) {
     $rooms = $this->getRoomsCheckoutDate($date);
 
@@ -540,6 +565,12 @@ class Rental extends Ardent {
           $this->detachRooms($room->id);
         }
     } 
+  }
+
+  public function lastRecord() {
+    return $this->records()
+    ->orderBy('created_at', 'desc')
+    ->first();
   }
 
   public function detachRooms($roomIds) {
