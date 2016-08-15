@@ -21,7 +21,7 @@ class CreateRentalsTable extends Migration
             $table->date('arrival_date');
             $table->date('departure_date')->nullable();
             $table->date('checkout_date')->nullable();
-            $table->enum('payment_type', ['transferencia', 'credito', 'efectivo']);
+            $table->enum('payment_type', ['transferencia', 'punto', 'efectivo']);
             $table->string('state')->default('conciliado');
             $table->enum('type', ['hours', 'days']);
             $table->float('amount');
@@ -30,6 +30,7 @@ class CreateRentalsTable extends Migration
             $table->float('discount');
             $table->boolean('checkout');
             $table->boolean('reservation');
+            $table->boolean('date_hour');
             
             $table->foreign('client_id')->references('id')->on('clients')->onDelete('cascade');
             $table->foreign('move_id')->references('id')->on('moves');
