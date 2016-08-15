@@ -71,14 +71,14 @@ class Move extends Ardent {
   public function getCountReservationHours() {
     return '(
       SELECT COUNT(*) FROM rentals WHERE rentals.type = "hours" AND rentals.move_id = moves.id
-      AND rentals.reservation = 1 AND rentals.state = "conciliado"
+      AND rentals.reservation = 1
     )';
   }
 
   public function getCountReservationDays() {
     return '(
       SELECT COUNT(*) FROM rentals WHERE rentals.type = "days" AND rentals.move_id = moves.id
-      AND rentals.reservation = 1 AND rentals.state = "conciliado"
+      AND rentals.reservation = 1
     )';
   }
 
