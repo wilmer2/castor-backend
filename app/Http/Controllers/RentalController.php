@@ -347,6 +347,14 @@ class RentalController extends Controller {
     if($rental->reservation) {
         return response()->validation_error('La reservación debe ser confirmada');
     }
+
+    $recordHaving = $rental->records()
+    ->where('type', 'days')
+    ->where('departure_date', $request->get('departure_date'));
+
+    if($recordHaving->count() > 0) {
+        return response()->validation_error('Ya tiene renovación  para esta fecha');
+    }
                    
     $rental->type = 'days';
     $rental->departure_time = createHour('12:00:00');
