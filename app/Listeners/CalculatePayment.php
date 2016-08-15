@@ -46,6 +46,8 @@ class CalculatePayment
       $amount = $this->calculateDiscount($amountRental, $rental->discount);
       $impost = $setting->calculateImpost($amount);
       $total = $amount + $impost;
+
+      $this->registerAmountRecord($rental, $amount, $setting);
       
       $rental->extra_hour = null;
       $rental->amount = $amount;
@@ -53,6 +55,18 @@ class CalculatePayment
       $rental->amount_total = $total;
 
       $rental->forceSave();
+    }
+
+    public function registerAmountRecord($rental, $newAmout, $setting) {
+      $recordAmount = $newAmout - $rental->amount;
+      $recordImpost = $setting->calculateImpost($recordAmount);
+      $totalAmount = $recordAmount + $recordImpost;
+
+      $record = $rental->lastRecord();
+      $record->amount = $recordAmount;
+      $record->amount_total = $totalAmount;
+
+      $record->save();
     }
 
     public function calculateAmountDay($rental, $setting, $rooms) {
