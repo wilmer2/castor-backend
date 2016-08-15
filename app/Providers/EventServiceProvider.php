@@ -19,8 +19,8 @@ class EventServiceProvider extends ServiceProvider
 
         'App\Events\RentalWasAssigned' => [
             'App\Listeners\CalculatePayment',
-            'App\Listeners\CheckRentalRooms'
-            //'App\Listeners\AssignToMove',
+            'App\Listeners\CheckRentalRooms',
+            'App\Listeners\AssignToMove',
         ],
     ];
 
