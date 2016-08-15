@@ -108,6 +108,10 @@ class Rental extends Ardent {
     if($this->renovate_hour != null) {
       $this->extra_hour = $this->renovate_hour;
     }
+
+    if($this->state == null) {
+        $this->state = 'conciliado';
+    }
   }
 
   public function beforeSave() {
@@ -322,6 +326,10 @@ class Rental extends Ardent {
 
     if($this->move_id != null) {
         $record->move_id = $this->move_id;
+    }
+
+    if($this->state == 'conciliado') {
+        $record->conciliate = 1;
     }
 
     $record->arrival_date = $this->arrival_date;
