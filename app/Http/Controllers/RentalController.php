@@ -315,6 +315,7 @@ class RentalController extends Controller {
     $inputData = $request->only('renovate_hour', 'room_ids', 'discount');
     $departureTime = $rental->departure_time;
     $departureDate = $rental->departure_date;
+    $paymenType = $request->get('payment_type');
 
     if($rental->update($inputData)) {
         $newRecord = new Record();
@@ -325,7 +326,7 @@ class RentalController extends Controller {
             $departureDate
         );
 
-        $rental->setRecord($newRecord);
+        $rental->setRecord($newRecord, $paymenType);
         $rental->moveDispatch();
 
         return response()->json(['message' => 'Hospedaje ha sido renovado']);
@@ -353,12 +354,13 @@ class RentalController extends Controller {
 
     $inputData = $request->only('departure_date', 'room_ids');
     $staticRoomIds = $request->get('static_rooms');
+    $paymenType = $request->get('payment_type');
 
     if($rental->update($inputData)) {
         $newRecord = new Record();
 
         $rental->checkRoomsRenovateDate($inputData['room_ids'], $staticRoomIds);
-        $rental->setRecord($newRecord);
+        $rental->setRecord($newRecord, $paymenType);
         $rental->moveDispatch();
 
         return response()->json(['message' => 'Hospedaje ha sido renovado']);
