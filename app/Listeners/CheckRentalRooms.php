@@ -28,22 +28,26 @@ class CheckRentalRooms
     public function handle(RentalWasAssigned $event) {
         $rental = $event->rental;
 
-        if($rental->checkout) {
-            $state = 'disponible';
-        } else {
-            $state = 'ocupada';
+        if(!$rental->reservation) {
+            if($rental->checkout) {
+              $state = 'disponible';
+            } else {
+              $state = 'ocupada';
+            }
+
+            $rooms = $rental->getEnabledRooms()
+            ->get();
+
+            foreach ($rooms as $room) {
+              $room->state = $state;
+              $room->save();
+            }
+
+            $rental->stateRoomCheckout();
+            $rental->rentalDayWithRoomsHour();
+            
+            $this->stateRoomWithoutRental();
         }
-
-        $rooms = $rental->getEnabledRooms()
-        ->get();
-
-        foreach ($rooms as $room) {
-            $room->state = $state;
-            $room->save();
-        }
-
-        $rental->stateRoomCheckout();
-        $this->stateRoomWithoutRental();
     }
 
 
