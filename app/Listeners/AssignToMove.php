@@ -26,21 +26,30 @@ class AssignToMove
      * @return void
      */
     public function handle(RentalWasAssigned $event) {
-      $move = $event->move();
+      $rental = $event->rental;
+      $date = currentDate();
 
-      if(!$move) {
-          if($event->state == 'conciliado') {
-              $user = currentUser();
+      if($rental->move_id == null) {
+          $user = currentUser();
+          $move = Move::where('user_id', $user->id)
+          ->where('date', $date);
 
-              $move = Move::firstOrCreate([
-                 'date' => $event->arrival_date,
-                 'user_id' => $user->id
-              ]);
+          if($move->count() > 0) {
+              $move = $move->first();
+          } else {
+              $move = new Move();
+              $move->date = $date;
+              $move->user_id = $user->id;
+
+              $move->save();
           }
-      } else {
-          if($event->state != 'conciliado') {
-              //
-          }
+          
+          $record = $rental->lastRecord();
+          $record->move_id = $move->id;
+          $record->save();
+
+          $rental->move_id = $move->id;
+          $rental->forceSave();
       }
     }
 }
