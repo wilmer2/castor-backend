@@ -24,6 +24,7 @@ class CreateRecordsTable extends Migration
             $table->time('departure_time');
             $table->float('amount');
             $table->float('amount_total');
+            $table->boolean('conciliate');
             
             $table->foreign('rental_id')->references('id')->on('rentals')->onDelete('cascade');
             $table->foreign('move_id')->references('id')->on('moves');
