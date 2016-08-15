@@ -123,4 +123,31 @@ class ReservationController extends Controller {
     $rooms = $roomTask->getRoomHourReservation($rental->id ,$roomsId);
     return response()->json($rooms);
   }
+
+  public function confirmReservation(Request $request, $rentalId) {
+    $rental = Rental::findOrFail($rentalId);
+    $date = currentDate();
+
+    if($rental->isCheckout()) {
+        return response()->validation_error('El hospedaje ya tiene salida');
+    }
+
+    if(!$rental->reservation) {
+        return response()->validation_error('La reservación  ya fue confirmada');
+    }
+
+    if($rental->arrival_date > $date) {
+        return response()->validation_error('Aun no es la fecha de reservación');
+    }
+
+    $rental->state = 'conciliado';
+    $rental->reservation = 0;
+    $rental->forceSave();
+
+    $record = $rental->lastRecord();
+    $record->conciliate = 1;
+    $record->save();
+
+    return response()->json(['message' => 'Reservación confirmada']);
+  }
 }
