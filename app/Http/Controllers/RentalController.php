@@ -415,6 +415,7 @@ class RentalController extends Controller {
     $rental->state = 'cancelado';
     $rental->checkout = 1;
     $rental->forceSave();
+    $rental->records()->forceDelete();
 
     return response()->json(['message' => 'Hospedaje cancelado']);
   }
