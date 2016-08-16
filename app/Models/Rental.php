@@ -397,6 +397,7 @@ class Rental extends Ardent {
         $this->renovateDateSync($renovateRoomIds);
      }
 
+     $this->deleteUnnecessaryRecords();
      $this->detachSameCheckinCheckout();
   }
 
@@ -479,8 +480,22 @@ class Rental extends Ardent {
     
   }
 
+  public function deleteUnnecessaryRecords() {
+    $date = currentDate();
+
+    $record = $this->records()
+    ->where('first', 0)
+    ->where('departure_date', '>', $date)
+    ->orderBy('created_at', 'asc')
+    ->first();
+
+    if($record) {
+        $record->delete();
+    }
+  }
+
   public function syncRooms($roomIds, $change = false) {
-     $this->rooms()->sync($roomIds, $change);
+    $this->rooms()->sync($roomIds, $change);
   }
 
   /** Model Querys */
@@ -566,7 +581,7 @@ class Rental extends Ardent {
     ->wherePivot('check_timein', null);
 
     if($roomsDetach->count() > 0) {
-        foreach ($$roomsDetach as $rooms) {
+        foreach ($roomsDetach as $rooms) {
           $room->state = 'disponible';
           $room->save();
 
