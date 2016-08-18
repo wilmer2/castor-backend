@@ -34,15 +34,16 @@ class Move extends Ardent {
         .$this->getCountRentalsDayWithHours(). 'as num_days_hour,'
         .$this->getCountReservationHours(). 'as num_reservation_hour,'
         .$this->getCountReservationDays(). 'as num_reservation_day,'
-        .$this->getTotalTransfer(). 'as  total_transfer,'
-        .$this->getTotalTransferWithImpost(). 'as total_transfer_impost,'
-        .$this->getTotalEffective(). 'as total_effective,'
-        .$this->getTotalEffectiveWithImpost(). 'as total_effective_impost,'
-        .$this->getTotalPoint(). 'as total_point,'
-        .$this->getTotalPointWithImpost(). 'as total_point_impost,'
-        .$this->getTotalDay(). 'as total_day,'
-        .$this->getTotalDayWithImpost(). 'as total_day_impost'
-
+        .$this->getTotalHours(). 'as total_hour,'
+        .$this->getTotalDays(). 'as total_day,'
+        .$this->getTotalDaysHours(). 'as total_day_hour,'
+        .$this->getTotalReservatioHours(). 'as total_reservation_hour,'
+        .$this->getTotalReservationDays(). 'as total_reservation_days,'
+        .$this->getTotalHoursImpost(). 'as total_hour_impost,'
+        .$this->getTotalDaysImpost(). 'as total_day_impost,'
+        .$this->getTotalDaysHoursImpost(). 'as total_dayhour_impost,'
+        .$this->getTotalReservatioHoursImpost(). 'as total_reservationhour_impost,'
+        .$this->getTotalReservationDaysImpost(). 'as total_reservationday_impost'
       )
       ->groupBy('moves.user_id', 'moves.date');
   }
@@ -71,68 +72,92 @@ class Move extends Ardent {
   public function getCountReservationHours() {
     return '(
       SELECT COUNT(*) FROM rentals WHERE rentals.type = "hours" AND rentals.move_id = moves.id
-      AND rentals.reservation = 1
+      AND rentals.reservation = 1 AND rentals.state = "conciliado"
     )';
   }
 
   public function getCountReservationDays() {
     return '(
       SELECT COUNT(*) FROM rentals WHERE rentals.type = "days" AND rentals.move_id = moves.id
-      AND rentals.reservation = 1
+      AND rentals.reservation = 1 AND rentals.state = "conciliado"
     )';
   }
 
-  public function getTotalTransfer() {
+  public function getTotalHours() {
     return '(
-      SELECT SUM(amount) FROM records WHERE records.move_id = moves.id AND 
-      records.payment_type = "transferencia" AND records.conciliate = 1
+      SELECT SUM(amount) FROM rentals WHERE rentals.type = "hours"
+      AND rentals.move_id = moves.id
+      AND rentals.reservation = 0
     )';
   }
 
-  public function getTotalTransferWithImpost() {
+  public function getTotalDays() {
     return '(
-      SELECT SUM(amount_total) FROM records WHERE records.move_id = moves.id AND
-      records.payment_type = "transferencia" AND records.conciliate = 1
+      SELECT SUM(amount) FROM rentals WHERE rentals.type = "days"
+      AND rentals.move_id = moves.id AND rentals.date_hour = 0
+      AND rentals.reservation = 0
     )';
   }
 
-  public function getTotalEffective() {
+  public function getTotalDaysHours() {
     return '(
-      SELECT SUM(amount) FROM records WHERE records.move_id = moves.id AND
-      records.payment_type = "efectivo" AND records.conciliate = 1
+      SELECT SUM(amount) FROM  rentals WHERE rentals.type = "days"
+      AND rentals.move_id = moves.id AND rentals.date_hour = 1
+      AND rentals.reservation = 0
     )';
   }
 
-  public function getTotalEffectiveWithImpost() {
+  public function getTotalReservationDays() {
     return '(
-      SELECT SUM(amount_total) FROM records WHERE records.move_id = moves.id AND
-      records.payment_type = "efectivo" AND records.conciliate = 1
+      SELECT SUM(amount) FROM rentals WHERE rentals.type = "days"
+      AND rentals.move_id = moves.id AND rentals.reservation = 1
+      AND rentals.state = "conciliado"
     )';
   }
 
-  public function getTotalPoint() {
+  public function getTotalReservatioHours() {
     return '(
-      SELECT SUM(amount) FROM records WHERE records.move_id = moves.id AND 
-      records.payment_type = "punto" AND records.conciliate = 1
+      SELECT SUM(amount) FROM  rentals WHERE rentals.type = "hours"
+      AND rentals.move_id = moves.id AND rentals.reservation = 1
+      AND rentals.state = "conciliado"
     )';
   }
 
-  public function getTotalPointWithImpost() {
+  public function getTotalDaysImpost() {
     return '(
-      SELECT SUM(amount_total) FROM records WHERE records.move_id = moves.id AND
-      records.payment_type = "punto" AND records.conciliate = 1
+      SELECT SUM(amount_total) FROM rentals WHERE rentals.type = "days"
+      AND rentals.move_id = moves.id AND rentals.date_hour = 0
+      AND rentals.reservation = 0
     )';
   }
 
-  public function getTotalDay() {
+  public function getTotalHoursImpost() {
     return '(
-      SELECT SUM(amount) FROM records WHERE records.move_id = moves.id AND records.conciliate = 1
+      SELECT SUM(amount_total) FROM rentals WHERE rentals.type = "hours"
+      AND rentals.move_id = moves.id AND rentals.reservation = 0
     )';
   }
 
-  public function getTotalDayWithImpost() {
+  public function getTotalDaysHoursImpost() {
     return '(
-      SELECT SUM(amount_total) FROM records WHERE records.move_id = moves.id AND records.conciliate = 1
+      SELECT SUM(amount_total) FROM rentals WHERE rentals.type = "days"
+      AND rentals.move_id = moves.id AND rentals.date_hour = 1
+    )';
+  }
+
+  public function getTotalReservationDaysImpost() {
+    return '(
+      SELECT SUM(amount_total) FROM rentals WHERE rentals.type = "days"
+      AND rentals.move_id = moves.id AND rentals.reservation = 1
+      AND rentals.state = "conciliado"
+    )';
+  }
+
+  public function getTotalReservatioHoursImpost() {
+    return '(
+      SELECT SUM(amount_total) FROM  rentals WHERE rentals.type = "hours"
+      AND rentals.move_id = moves.id AND rentals.reservation = 1
+      AND rentals.state = "conciliado"
     )';
   }
 
