@@ -304,7 +304,7 @@ class Rental extends Ardent {
     }
   }
 
-  public function registerRecord() {
+  /*public function registerRecord() {
     $record = $this->records()
     ->where('first', 1);
 
@@ -316,9 +316,9 @@ class Rental extends Ardent {
     }
 
     $this->setRecord($record, $this->payment_type);
-  }
+  }*/
 
-  public function setRecord($record, $paymentType) {
+  /*public function setRecord($record, $paymentType) {
     if($this->departure_time == null) {
         $record->departure_time = createHour('12:00:00');
     } else {
@@ -347,7 +347,7 @@ class Rental extends Ardent {
     $record->rental_id = $this->id;
 
     $record->save();
-  }
+  }*/
 
   public function confirmCheckoutRoom() {
      $enabledRooms = $this->getEnabledRooms();
@@ -404,7 +404,7 @@ class Rental extends Ardent {
         $this->renovateDateSync($renovateRoomIds);
      }
 
-     $this->deleteUnnecessaryRecords();
+     //$this->deleteUnnecessaryRecords();
      $this->detachSameCheckinCheckout();
   }
 
@@ -487,7 +487,7 @@ class Rental extends Ardent {
     
   }
 
-  public function deleteUnnecessaryRecords() {
+  /*public function deleteUnnecessaryRecords() {
     $date = currentDate();
 
     $record = $this->records()
@@ -499,7 +499,7 @@ class Rental extends Ardent {
     if($record) {
         $record->delete();
     }
-  }
+  }*/
 
   public function syncRooms($roomIds, $change = false) {
     $this->rooms()->sync($roomIds, $change);
@@ -597,11 +597,11 @@ class Rental extends Ardent {
     } 
   }
 
-  public function lastRecord() {
+  /*public function lastRecord() {
     return $this->records()
     ->orderBy('created_at', 'desc')
     ->first();
-  }
+  }*/
 
   public function detachRooms($roomIds) {
       $this->rooms()->detach($roomIds);

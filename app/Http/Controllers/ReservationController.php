@@ -26,7 +26,7 @@ class ReservationController extends Controller {
 
     if($newReservation->save()) {
         $newReservation->rooms()->attach($inputData['room_ids']);
-        $newReservation->registerRecord();
+        //$newReservation->registerRecord();
 
         $newReservation->moveDispatch();
         return response()->json($newReservation);
@@ -50,7 +50,7 @@ class ReservationController extends Controller {
      
     if($rental->update($inputData)) {
         $rental->syncRooms($inputData['room_ids'], true);
-        $rental->registerRecord();
+        //$rental->registerRecord();
 
         $rental->moveDispatch();
         return response()->json($rental);
@@ -75,7 +75,7 @@ class ReservationController extends Controller {
 
     if($rental->update($inputData)) {
         $rental->syncRooms($inputData['room_ids'], true);
-        $rental->registerRecord();
+        //$rental->registerRecord();
         
         $rental->moveDispatch();
         return response()->json($rental);
@@ -144,9 +144,9 @@ class ReservationController extends Controller {
     $rental->reservation = 0;
     $rental->forceSave();
 
-    $record = $rental->lastRecord();
+    /*$record = $rental->lastRecord();
     $record->conciliate = 1;
-    $record->save();
+    $record->save();*/
 
     return response()->json(['message' => 'Reservación confirmada']);
   }

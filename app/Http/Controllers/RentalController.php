@@ -30,7 +30,7 @@ class RentalController extends Controller {
 
     if($newRental->save()) {
         $newRental->rooms()->attach($inputData['room_ids']);
-        $newRental->registerRecord();
+        //$newRental->registerRecord();
         $newRental->moveDispatch();   
 
         return response()->json($newRental);
@@ -258,7 +258,7 @@ class RentalController extends Controller {
       $room->state = 'mantenimiento';
       $room->save();
 
-      $recordTask->checkoutRoomDate($rental, $room);
+      //$recordTask->checkoutRoomDate($rental, $room);
 
       $rental->moveDispatch();
       $rental->confirmCheckoutRoom();
@@ -324,10 +324,10 @@ class RentalController extends Controller {
     $inputData = $request->only('renovate_hour', 'room_ids', 'discount');
     $departureTime = $rental->departure_time;
     $departureDate = $rental->departure_date;
-    $paymenType = $request->get('payment_type');
+    //$paymenType = $request->get('payment_type');
 
     if($rental->update($inputData)) {
-        $newRecord = new Record();
+        //$newRecord = new Record();
         
         $rental->checkRoomsRenovateHour(
             $inputData['room_ids'],  
@@ -335,7 +335,7 @@ class RentalController extends Controller {
             $departureDate
         );
 
-        $rental->setRecord($newRecord, $paymenType);
+        //$rental->setRecord($newRecord, $paymenType);
         $rental->moveDispatch();
 
         return response()->json(['message' => 'Hospedaje ha sido renovado']);
@@ -357,13 +357,13 @@ class RentalController extends Controller {
         return response()->validation_error('La reservación debe ser confirmada');
     }
 
-    $recordHaving = $rental->records()
+    /*$recordHaving = $rental->records()
     ->where('type', 'days')
-    ->where('departure_date', $request->get('departure_date'));
+    ->where('departure_date', $request->get('departure_date'));*/
 
-    if($recordHaving->count() > 0) {
+    /*if($recordHaving->count() > 0) {
         return response()->validation_error('Ya tiene renovación  para esta fecha');
-    }
+    }*/
                    
     $rental->type = 'days';
     $rental->departure_time = createHour('12:00:00');
@@ -371,13 +371,13 @@ class RentalController extends Controller {
 
     $inputData = $request->only('departure_date', 'room_ids');
     $staticRoomIds = $request->get('static_rooms');
-    $paymenType = $request->get('payment_type');
+    //$paymenType = $request->get('payment_type');
 
     if($rental->update($inputData)) {
-        $newRecord = new Record();
+        ///$newRecord = new Record();
 
         $rental->checkRoomsRenovateDate($inputData['room_ids'], $staticRoomIds);
-        $rental->setRecord($newRecord, $paymenType);
+        //$rental->setRecord($newRecord, $paymenType);
         $rental->moveDispatch();
 
         return response()->json(['message' => 'Hospedaje ha sido renovado']);
@@ -427,7 +427,7 @@ class RentalController extends Controller {
     $rental->state = 'cancelado';
     $rental->checkout = 1;
     $rental->forceSave();
-    $rental->records()->forceDelete();
+    //$rental->records()->forceDelete();
 
     return response()->json(['message' => 'Hospedaje cancelado']);
   }
