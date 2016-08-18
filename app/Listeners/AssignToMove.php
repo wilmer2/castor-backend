@@ -44,9 +44,9 @@ class AssignToMove
               $move->save();
           }
           
-          $record = $rental->lastRecord();
+          /*$record = $rental->lastRecord();
           $record->move_id = $move->id;
-          $record->save();
+          $record->save();*/
 
           $rental->move_id = $move->id;
           $rental->forceSave();
