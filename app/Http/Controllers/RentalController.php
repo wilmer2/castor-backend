@@ -391,6 +391,10 @@ class RentalController extends Controller {
     $rental = Rental::findOrFail($rentalId);
     $date = currentDate();
 
+    if($rental->checkout) {
+        return response()->validation_error('Habitación ya tiene salida');
+    }
+
     if($rental->reservation) {
         return response()->validation_error('Debe confirmar reservación');
     }
