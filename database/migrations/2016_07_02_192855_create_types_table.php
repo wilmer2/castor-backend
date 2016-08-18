@@ -14,7 +14,7 @@ class CreateTypesTable extends Migration
     {
         Schema::create('types', function (Blueprint $table) {
             $table->increments('id');
-             $table->string('title')->unique();
+            $table->string('title')->unique();
             $table->string('description');
             $table->float('increment');
             

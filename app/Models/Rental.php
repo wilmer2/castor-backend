@@ -10,6 +10,7 @@ class Rental extends Ardent {
   
   public $autoPurgeRedundantAttributes = true;
   public $extra_hour = null;
+  public $checkout_room = false;
   protected $rooms_validation = [];
   protected $old_departure = null;
   protected $search_date = null;
@@ -333,7 +334,13 @@ class Rental extends Ardent {
     }
 
     $record->arrival_date = $this->arrival_date;
-    $record->departure_date = $this->departure_date;
+
+    if($this->checkout_date != null) {
+        $record->departure_date = $this->checkout_date;
+    } else {
+        $record->departure_date = $this->departure_date;
+    }
+    
     $record->payment_type = $paymentType;
     
     $record->type = $this->type;

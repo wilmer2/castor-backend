@@ -10,6 +10,7 @@ use App\Models\Rental;
 use App\Models\Room;
 use App\Models\Record;
 use App\Http\Tasks\RoomTask;
+use App\Http\Tasks\RecordTask;
 use App\Validators\RentalValidator;
 
 class RentalController extends Controller {
@@ -212,49 +213,57 @@ class RentalController extends Controller {
   }
 
 
-  public function checkoutRoomDate(Request $request, $rentalId, $roomId) {
-    $rental = Rental::findOrFail($rentalId);
-    $date = currentDate();
+  public function checkoutRoomDate(
+    Request $request,
+    RecordTask $recordTask, 
+    $rentalId, 
+    $roomId
+  ) {
 
-    if($rental->isCheckout()) {
-        return response()->validation_error('El hospedaje ya tiene salida');
-    }
+      $rental = Rental::findOrFail($rentalId);
+      $date = currentDate();
 
-    if($rental->type == 'hours') {
-        return response()->validation_error('El hospedaje debe ser por día');
-    }
+      if($rental->isCheckout()) {
+          return response()->validation_error('El hospedaje ya tiene salida');
+      }
 
-    if($rental->reservation) {
-        return response()->validation_error('Debe confirmar reservación');
-    }
+      if($rental->type == 'hours') {
+          return response()->validation_error('El hospedaje debe ser por día');
+      }
 
-    $room = $rental->findRoom($roomId);
+      if($rental->reservation) {
+          return response()->validation_error('Debe confirmar reservación');
+      }
 
-    if(!$room) {
-        return response()->validation_error('Habitación no encontrada');
-    }
+      $room = $rental->findRoom($roomId);
 
-    if($room->pivot->check_out != null) {
-        return response()->validation_error('Habitación ya tiene salida');
-    }
+      if(!$room) {
+          return response()->validation_error('Habitación no encontrada');
+      }
 
-    if(
-        $rental->arrival_date == $date || 
-        $room->pivot->check_in != null &&  
-        $room->pivot->check_in == $date
-    ) {
-        return response()->validation_error('La habitación debe tener al menos un día para dar salida');
-    }
+      if($room->pivot->check_out != null) {
+          return response()->validation_error('Habitación ya tiene salida');
+      }
 
-    $room->pivot->check_out = $date;
-    $room->pivot->save();
-    $room->state = 'mantenimiento';
-    $room->save();
+      if(
+          $rental->arrival_date == $date || 
+          $room->pivot->check_in != null &&  
+          $room->pivot->check_in == $date
+      ) {
+          return response()->validation_error('La habitación debe tener al menos un día para dar salida');
+      }
 
-    $rental->moveDispatch();
-    $rental->confirmCheckoutRoom();
+      $room->pivot->check_out = $date;
+      $room->pivot->save();
+      $room->state = 'mantenimiento';
+      $room->save();
 
-    return response()->json(['message' => 'Salida de habitación confirmada']);
+      $recordTask->checkoutRoomDate($rental, $room);
+
+      $rental->moveDispatch();
+      $rental->confirmCheckoutRoom();
+
+      return response()->json(['message' => 'Salida de habitación confirmada']);
   }
 
 
@@ -394,8 +403,11 @@ class RentalController extends Controller {
         $rental->deleteCheckRoomsDate($date);
         $rental->changeCheckoutDate($date);
     }
+
+    if($date < $rental->departure_date && $rental->type == 'days') {
+        $rental->checkout_date = $date;
+    }
      
-    $rental->checkout_date = $date;
     $rental->checkout = 1;
     $rental->forceSave();
     $rental->moveDispatch();

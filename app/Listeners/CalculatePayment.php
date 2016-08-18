@@ -6,6 +6,7 @@ use App\Events\RentalWasAssigned;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Carbon\Carbon;
+use App\Models\Record;
 
 class CalculatePayment
 {
@@ -45,9 +46,9 @@ class CalculatePayment
 
       $amount = $this->calculateDiscount($amountRental, $rental->discount);
       $impost = $setting->calculateImpost($amount);
-      $total = $amount + $impost;
+      $total = sumNum($amount, $impost);
 
-      $this->registerAmountRecord($rental, $amount, $setting);
+      $this->registerAmountRecord($rental, $amount, $setting); 
       
       $rental->extra_hour = null;
       $rental->amount = $amount;
@@ -55,18 +56,23 @@ class CalculatePayment
       $rental->amount_total = $total;
 
       $rental->forceSave();
+      $this->hasCheckoutDate($rental, $setting);
     }
 
     public function registerAmountRecord($rental, $newAmout, $setting) {
-      $recordAmount = $newAmout - $rental->amount;
-      $recordImpost = $setting->calculateImpost($recordAmount);
-      $totalAmount = $recordAmount + $recordImpost;
+     
+      if($rental->checkout_date == null &&  !$rental->checkout_room) {
+          $recordAmount =  resNum($newAmout, $rental->amount);
+          $recordImpost = $setting->calculateImpost($recordAmount);
+          $totalAmount = sumNum($recordAmount, $recordImpost);
 
-      $record = $rental->lastRecord();
-      $record->amount = $recordAmount;
-      $record->amount_total = $totalAmount;
+          $record = $rental->lastRecord();
+          $record->amount = $recordAmount;
+          $record->amount_total = $totalAmount;
 
-      $record->save();
+          $record->save();
+      }
+     
     }
 
     public function calculateAmountDay($rental, $setting, $rooms) {
@@ -179,6 +185,87 @@ class CalculatePayment
       }
 
       return $result;
+    }
+
+    public function hasCheckoutDate($rental, $setting) {
+      if($rental->checkout_date != null) {
+          $records = $rental->records()
+          ->orderBy('created_at', 'desc')
+          ->get();
+
+          $recordSameDate = $records->where('departure_date', $rental->checkout_date)
+          ->first();
+
+          $firstRecord = $records->where('first', 1)->first();
+
+          $iterateRecords = $records->filter(function ($value, $key) {
+              return $value->first == 0;
+          });
+
+          if($iterateRecords->count() > 0) {
+             $this->setRecordCheckout(
+               $rental, 
+               $records, 
+               $recordSameDate, 
+               $iterateRecords, 
+               $firstRecord, 
+               $setting
+             );
+          } else {
+              $this->editFirstRecord($rental, $firstRecord);
+          }
+      }
+    }
+
+    public function setRecordCheckout(
+      $rental,
+      $records, 
+      $recordSameDate, 
+      $iterateRecords, 
+      $firstRecord, 
+      $setting
+    ) {
+       $amount = $rental->amount;
+
+       foreach($iterateRecords as $iterateRecord) {
+          if($iterateRecord->departure_date > $rental->checkout_date) {
+              $iterateRecord->delete();
+          } else {
+              if(!$recordSameDate) {
+                $amount -= $iterateRecord->amount;
+              }
+          }
+       }
+
+       if($firstRecord->departure_date > $rental->checkout_date) {
+          $this->editFirstRecord($rental, $firstRecord);
+       } else {
+          if(!$recordSameDate) {
+              $firstRecord->conciliate = 0;
+              $firstRecord->save();
+
+              $lastRecord = $records->first(function ($key, $record) use ($rental) {
+                  return $record->departure_date > $rental->checkout_date && $record->first == 0;
+              });
+          
+              $impost = $setting->calculateImpost($amount);
+              $total = sumNum($amount, $impost);
+
+              $newRecord = new Record();
+              $newRecord->amount = $amount;
+              $newRecord->amount_total = $total;
+
+              $rental->setRecord($newRecord, $lastRecord->payment_type);
+         }
+       }
+    }
+
+    public function editFirstRecord($rental, $firstRecord) {
+      $firstRecord->amount = $rental->amount;
+      $firstRecord->amount_total = $rental->amount_total;
+      $firstRecord->departure_date = $rental->checkout_date;
+
+      $firstRecord->save();
     }
 
 }

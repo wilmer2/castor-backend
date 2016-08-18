@@ -74,6 +74,22 @@ function calculateTotalHours($fromTime, $toTime) {
   return $totalTime;
 }
 
+function resNum($first, $second) {
+  if($first > $second) {
+      $total = $first - $second;
+  } else {
+      $total = $second - $first;
+  }
+
+  return $total;
+}
+
+function sumNum($first, $second) {
+  $total = $first + $second;
+
+  return $total;
+}
+
 function diffDays($fromDate, $toDate) {
   $fromDate = new Carbon($fromDate);
   $toDate = new Carbon($toDate);
