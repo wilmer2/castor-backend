@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 use App\Models\Room;
+use App\Http\Tasks\RoomTask;
 
 class RoomController extends Controller {
 
@@ -32,5 +33,32 @@ class RoomController extends Controller {
     } else {
         return response()->validation_error($room->errors());
     } 
+  }
+
+  public function availableDatesRooms(Request $request, RoomTask $roomTask, $startDate, $endDate, $time) { 
+    $roomTask->setData($startDate, $time, $endDate);
+
+    if(!$roomTask->isValidDataQuery()) {
+        return response()->validation_error($roomTask->getMessage());
+    }
+
+    $rooms = $roomTask->getAvailableDateRoom();
+
+    return response()->json($rooms);
+  }
+
+  public function availableHourRooms(Request $request, RoomTask $roomTask, $startDate, $starTime, $endTime) {
+
+
+    dd($startDate, $starTime, $endTime);
+    $roomTask->setData($startDate, $starTime, null, $endTime);
+
+    if(!$roomTask->isValidDataQuery()) {
+        return response()->validation_error($roomTask->getMessage());
+    }
+
+    $rooms = $roomTask->getAvailableHourRoom();
+
+    return response()->json($rooms);
   }
 }
