@@ -47,7 +47,7 @@ class RoomTask {
         return $rooms;
 
     } else {
-        return $rooms;
+        return ['rooms' => $rooms, 'select' => false];
     }
 
   }
