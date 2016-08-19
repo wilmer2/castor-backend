@@ -48,9 +48,6 @@ class RoomController extends Controller {
   }
 
   public function availableHourRooms(Request $request, RoomTask $roomTask, $startDate, $starTime, $endTime) {
-
-
-    dd($startDate, $starTime, $endTime);
     $roomTask->setData($startDate, $starTime, null, $endTime);
 
     if(!$roomTask->isValidDataQuery()) {
