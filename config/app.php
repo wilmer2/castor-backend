@@ -157,7 +157,7 @@ return [
         App\Providers\RouteServiceProvider::class,
         App\Providers\CustomResponsesProvider::class,
         App\Providers\CustomValidationRules::class,
-        Zizaco\Entrust\EntrustServiceProvider::class
+        Zizaco\Entrust\EntrustServiceProvider::class,
 
     ],
 
