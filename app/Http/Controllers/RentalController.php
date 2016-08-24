@@ -39,6 +39,12 @@ class RentalController extends Controller {
     }
   }
 
+  public function show(Request $request, $rentalId) {
+    $client = Client::findOrFail($rentalId);
+
+    return response()->json($client);
+  }
+
 
    public function removeRoom(Request $request, $rentalId, $roomId) {
     $rental = Rental::findOrFail($rentalId);
