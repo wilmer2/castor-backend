@@ -40,9 +40,9 @@ class RentalController extends Controller {
   }
 
   public function show(Request $request, $rentalId) {
-    $client = Client::findOrFail($rentalId);
+    $rental = Rental::findOrFail($rentalId);
 
-    return response()->json($client);
+    return response()->json($rental);
   }
 
 
