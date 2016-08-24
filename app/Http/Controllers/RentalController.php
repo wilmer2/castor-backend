@@ -45,6 +45,16 @@ class RentalController extends Controller {
     return response()->json($rental);
   }
 
+  public function getRentalAvailableRooms(Request $request, $rentalId) {
+    $rental = Rental::findOrFail($rentalId);
+    $enabledRoomIds = $rental->getEnabledRoomsId();
+
+    return response()->json([
+        'rental' => $rental,
+        'available_room_ids' => $enabledRoomIds
+    ]);
+  }
+
 
    public function removeRoom(Request $request, $rentalId, $roomId) {
     $rental = Rental::findOrFail($rentalId);
