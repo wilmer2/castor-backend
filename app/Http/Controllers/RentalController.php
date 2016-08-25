@@ -39,24 +39,37 @@ class RentalController extends Controller {
     }
   }
 
+
   public function show(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
 
     return response()->json($rental);
   }
 
-  public function getRentalAvailableRooms(Request $request, $rentalId) {
+  public function getRentalEnabledRooms(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
-    $enabledRoomIds = $rental->getEnabledRoomsId();
-
+    $enabledRooms = $rental->getEnabledRooms()
+    ->leftJoin('types','rooms.type_id', '=', 'types.id')
+    ->select(
+      'rooms.code_number',
+      'rooms.state',
+      'types.title',
+      'types.description',
+      'types.increment',
+      'types.img_url',
+      'types.id as typeId',
+      'rooms.id as roomId'
+    )
+    ->get();
+    
     return response()->json([
         'rental' => $rental,
-        'available_room_ids' => $enabledRoomIds
+        'available_rooms' => $enabledRooms
     ]);
   }
 
 
-   public function removeRoom(Request $request, $rentalId, $roomId) {
+  public function removeRoom(Request $request, $rentalId, $roomId) {
     $rental = Rental::findOrFail($rentalId);
 
     if($rental->isCheckout()) {
