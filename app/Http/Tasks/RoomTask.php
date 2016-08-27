@@ -106,9 +106,11 @@ class RoomTask {
           'rooms' => $rooms,
           'select' => true
         ];
-    }
 
-    return $rooms;
+        return $rooms;
+    } else {
+        return ['rooms' => $rooms, 'select' => false];
+    }
   }
 
   public function getAvailableHourRoom($rentalId = null) {
@@ -172,7 +174,7 @@ class RoomTask {
     if($departureDate != null) {
       if(!$this->rentalValidator->isValidBetweenDates($arrivalDate, $departureDate)) {
           $valid = false;
-          $this->setMessage('Ingrese fechas correctamente');
+          $this->setMessage('Fecha de salida ya paso');
       }
     } 
     
