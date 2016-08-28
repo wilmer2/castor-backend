@@ -85,7 +85,7 @@ class CalculatePayment
       $amount = 0;  
 
       foreach ($rooms as $room) {
-        if($room->pivot->check_timeout == null) {
+        if($room->pivot->check_timeout == null || $room->pivot->pass_time) {
             if($room->pivot->check_in != null) {
                 $startDate = Carbon::parse($room->pivot->check_in);
             } else {
@@ -164,6 +164,14 @@ class CalculatePayment
     }
 
     public function calculateAmountDayTimeExtra($rental, $setting) {
+      $recenRooms = $rental->rooms()
+      ->wherePivot('check_in', $rental->departure_date)
+      ->leftJoin('types','rooms.type_id', '=', 'types.id')
+       ->select(
+          'types.increment'
+       );
+
+
       $totalTime = explode(':', $rental->extra_hour);
       $extraHours = $totalTime[0];
       $amountPerHour = $extraHours * $setting->price_hour;
@@ -172,7 +180,23 @@ class CalculatePayment
       ->count();
 
       $amountTotalRooms = $countRooms * $amountPerHour;
-      $amountAccumulative = $rental->amount + $amountTotalRooms; 
+      $amountAccumulative = $rental->amount + $amountTotalRooms;
+
+      if($recenRooms->count() > 0) {
+          $recenRooms = $recenRooms->get();
+
+          foreach ($recenRooms as $recenRoom) {
+            if(!$recenRoom->pivot->pass_time) {
+                $recenRoom->pivot->pass_time = 1;
+                $recenRoom->pivot->check_timeout = currentHour();
+
+                $recenRoom->pivot->save();
+
+                $amountAccumulative += $recenRoom->increment;
+            }
+            
+          }
+      } 
 
       return $amountAccumulative;
     }
