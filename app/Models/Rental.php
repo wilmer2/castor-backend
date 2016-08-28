@@ -89,7 +89,7 @@ class Rental extends Ardent {
   public function rooms() {
     return $this->belongsToMany(Room::class)
      ->withTimestamps()
-     ->withPivot('check_in', 'check_out', 'check_timeout', 'check_timein');
+     ->withPivot('check_in', 'check_out', 'check_timeout', 'check_timein', 'pass_time');
   }
   
   public function move() {
