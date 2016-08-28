@@ -37,7 +37,7 @@ class Rental extends Ardent {
 
   public static $rules = [
     'room_ids' => 'required|exists:rooms,id',
-    'payment_type' => 'required|in:transferencia,punto,efectivo',
+    //'payment_type' => 'required|in:transferencia,punto,efectivo',
     'type' => 'required|in:hours,days',
     'arrival_date' => 'required_if:reservation,1|date',
     'arrival_time' => 'required_if:reservation,1|date_format:H:i:s|date_hour',
@@ -63,8 +63,8 @@ class Rental extends Ardent {
     'type.in' => 'El tipo es inválido',
     'renovate_hour.required' => 'La hora de renovacion es obligatoria',
     'renovate_hour.in' => 'La hora para renovar es inválida',
-    'payment_type.required' => 'El tipo de pago es obligatorio',
-    'payment_type.in' => 'El tipo de pago no esta entre la opciones',
+    /*'payment_type.required' => 'El tipo de pago es obligatorio',
+    'payment_type.in' => 'El tipo de pago no esta entre la opciones',*/
     'extra_hour.date_format' =>  'La hora de finalización es inválida', 
     'room_ids.required' => 'Las habitaciones son obligatorias',
     'room_ids.exists' => 'Alguna de las habitaciones no existe ',
@@ -362,10 +362,10 @@ class Rental extends Ardent {
     $date = currentDate();
     $roomsEnabled = $this->getEnabledRoomsId();
     $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
+    $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
 
     if($this->type == 'hours') {
         if(count($oldRoomIds) > 0) {
-            $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
 
             if($departureDate == null) {
                $departureDate = $this->arrival_date;
@@ -382,11 +382,10 @@ class Rental extends Ardent {
     } else {
         if(count($oldRoomIds) > 0) {
            $oldRoomsSyncDate = syncDataCheckout($oldRoomIds, $this->departure_date);
+           $newRoomsSyncDate = syncData($newRoomIds, $this->departure_date);
 
-           $this->syncRooms($renovateRoomIds);
+           $this->syncRooms($newRoomsSyncDate);
            $this->syncRooms($oldRoomsSyncDate);
-        } else {
-            $this->syncRooms($renovateRoomIds);
         }
     }
   }
