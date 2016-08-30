@@ -94,7 +94,7 @@ class ReservationController extends Controller {
     $time
   ) {
       $rental = Rental::findOrFail($rentalId);
-      $roomsId = $rental->getRoomsId();
+      $roomsId = $rental->getEnabledRoomsId();
       
       $roomTask->setData(
          $statDate,
@@ -120,7 +120,7 @@ class ReservationController extends Controller {
     $departureTime
   ) {
       $rental = Rental::findOrFail($rentalId);
-      $roomsId = $rental->getRoomsId();
+      $roomsId = $rental->getEnabledRoomsId();
 
       $roomTask->setData(
           $startDate,
