@@ -16,6 +16,12 @@ class RoomController extends Controller {
     return response()->json($rooms);
   }
 
+  public function show(Request $request, $roomId) {
+    $room = Room::findOrFail($roomId);
+
+    return response()->json($room);
+  }
+
   public function getRoomsMaintenance() {
     $rooms = Room::where('state', 'mantenimiento')
     ->get();
