@@ -61,5 +61,44 @@ class UserController extends Controller {
     return response()->json($user);
   }
 
+  public function update(Request $request, $userId) {
+    $user = User::findOrFail($userId);
+
+    $data = $request->only('name', 'email');
+    $role = $request->input('role');
+    $newPassword = $request->input('password');
+    $newRole = $request->input('role');
+
+    $validatorRules = [
+      'name' => 'required',
+      'email' => 'required|email|unique:users,email,'. $userId,
+    ];
+
+    $validator = Validator::make($data, $validatorRules, $this->validatorMessages);
+
+     if($validator->fails()) {
+        $errorsMessages = $validator->errors()->all();
+
+        return response()->validation_error($errorsMessages);
+    } else {
+        $user->update($data);
+
+        if(strlen($newPassword) >= 4) {
+            $user->password = bcrypt($newPassword);
+            $user->save();
+        }
+
+        if($newRole == 1 and !$user->hasRole('admin')) {
+            $user->roles()->attach(1);
+        } else if($newRole == 2) {
+            $user->roles()->detach(1);
+        }
+
+        $user->loadRole();
+        
+        return response()->json($user);
+    }
+  }
+
   
 }
