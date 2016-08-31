@@ -163,4 +163,12 @@ class ReservationController extends Controller {
 
     return response()->json(['message' => 'Reservación confirmada']);
   }
+
+  public function getReservation($startDate, $endDate) {
+    $reservations = Rental::where('reservation', 1)
+    ->whereBetween('arrival_date', array($startDate, $endDate))
+    ->get();
+
+    return response()->json($reservations);
+  }
 }
