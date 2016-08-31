@@ -15,6 +15,14 @@ use App\Validators\RentalValidator;
 
 class RentalController extends Controller {
 
+  public function index() {
+    $rentals = Rental::where('checkout', 0)
+    ->where('reservation', 0)
+    ->get();
+
+    return response()->json($rentals);
+  }
+
   public function store(Request $request) {
     if($request->has('clientId')) {
         $client = Client::findOrFail($request->get('clientId'));
@@ -42,6 +50,7 @@ class RentalController extends Controller {
 
   public function show(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
+    $rental = $rental->getData();
 
     return response()->json($rental);
   }
@@ -151,7 +160,7 @@ class RentalController extends Controller {
     $rental->syncRooms($sync);
     $rental->moveDispatch();
 
-    return response()->json(['message' => 'Habitación a sido cambiada']);
+    return response()->json($rental);
   }
 
 
@@ -198,7 +207,7 @@ class RentalController extends Controller {
     $rental->syncRooms($sync);
     $rental->moveDispatch();
 
-    return response()->json(['message' => 'Habitaciones registradas']);
+    return response()->json($rental);
   }
 
 
@@ -238,7 +247,7 @@ class RentalController extends Controller {
     $rental->syncRooms($roomIds);
     $rental->moveDispatch();
 
-    return response()->json(['message' => 'Habitaciones registradas']);
+    return response()->json($rental);
   }
 
 
@@ -367,7 +376,7 @@ class RentalController extends Controller {
         //$rental->setRecord($newRecord, $paymenType);
         $rental->moveDispatch();
 
-        return response()->json(['message' => 'Hospedaje ha sido renovado']);
+        return response()->json($rental);
     } else {
         return response()->validation_error($rental->errors());
     }
@@ -409,7 +418,7 @@ class RentalController extends Controller {
         //$rental->setRecord($newRecord, $paymenType);
         $rental->moveDispatch();
 
-        return response()->json(['message' => 'Hospedaje ha sido renovado']);
+        return response()->json($rental);
     } else {
         return response()->validation_error($rental->errors());
     }
