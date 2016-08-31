@@ -9,9 +9,15 @@ use App\Models\Type;
 
 class TypeController extends Controller {
 
+  public function index() {
+    $types = Type::all();
+
+    return response()->json($types);
+  }
+
+  
   public function store(Request $request) {
     $inputData = $request->all();
-
     $newType = new Type($inputData);
 
     if($newType->save()) {
@@ -31,5 +37,17 @@ class TypeController extends Controller {
     } else {
         return response()->validation_error($type->errors());
     }
+  }
+
+  public function delete(Request $request, $typeId) {
+    $type = Type::findOrFail($typeId);
+
+    if($type->countRooms()) {
+        return response()->validation_error('No se puede borrar tipo mientas tenga habitaciones asignadas');
+    }
+
+    $type->delete();
+
+    return response()->json(['message' => 'El tipo ha sido borrado']);
   }
 }
