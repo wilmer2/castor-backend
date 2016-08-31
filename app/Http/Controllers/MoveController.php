@@ -10,9 +10,11 @@ use App\Models\Move;
 
 class MoveController extends Controller {
 
-  public function index() {
-    $moves = Move::amountMove()->get();
+  public function moves($startDate, $endDate) {
+    $moves = Move::amountMove()
+    ->whereBetween('date', array($startDate, $endDate))
+    ->get();
 
-    return $moves;
-  } 
+    return response()->json($moves);
+  }
 }
