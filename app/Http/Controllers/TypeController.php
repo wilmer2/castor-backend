@@ -15,6 +15,12 @@ class TypeController extends Controller {
     return response()->json($types);
   }
 
+  public function show(Request $request, $typeId) {
+    $type = Type::findOrFail($typeId);
+
+    return response()->json($type);
+  }
+
   
   public function store(Request $request) {
     $inputData = $request->all();
