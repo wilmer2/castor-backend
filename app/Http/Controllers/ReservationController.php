@@ -7,11 +7,12 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Models\Client;
 use App\Models\Rental;
+use App\Http\Tasks\RentalTask;
 use App\Http\Tasks\RoomTask;
 
 class ReservationController extends Controller {
 
-  public function addReservation(Request $request) {
+  public function addReservation(Request $request, RentalTask $rentalTask) {
     if($request->has('clientId')) {
         $client = Client::findOrFail($request->get('clientId'));
     } else {
@@ -25,8 +26,7 @@ class ReservationController extends Controller {
     $newReservation->reservation = 1;
 
     if($newReservation->save()) {
-        $newReservation->rooms()->attach($inputData['room_ids']);
-        //$newReservation->registerRecord();
+        $rentalTask->registerPayment($newReservation, $inputData['room_ids']);
 
         $newReservation->moveDispatch();
         return response()->json($newReservation);
@@ -36,7 +36,7 @@ class ReservationController extends Controller {
   }
 
 
-  public function updateReservationForHour(Request $request, $rentalId) {
+  public function updateReservationForHour(Request $request, RentalTask $rentalTask, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
 
     if(!$rental->reservation) {
@@ -49,9 +49,8 @@ class ReservationController extends Controller {
     $inputData = $request->only('arrival_date', 'arrival_time', 'departure_time', 'room_ids');
      
     if($rental->update($inputData)) {
-        $rental->syncRooms($inputData['room_ids'], true);
-        //$rental->registerRecord();
-
+       $rentalTask->registerPayment($rental, $inputData['room_ids']);
+        
         $rental->moveDispatch();
         return response()->json($rental);
     } else {
@@ -61,7 +60,7 @@ class ReservationController extends Controller {
   }
   
 
-  public function updateReservationForDate(Request $request, $rentalId) {
+  public function updateReservationForDate(Request $request, RentalTask $rentalTask, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
 
     if(!$rental->reservation) {
@@ -74,8 +73,7 @@ class ReservationController extends Controller {
     $inputData = $request->only('arrival_date', 'arrival_time', 'departure_date', 'room_ids');
 
     if($rental->update($inputData)) {
-        $rental->syncRooms($inputData['room_ids'], true);
-        //$rental->registerRecord();
+        $rentalTask->registerPayment($rental, $inputData['room_ids']);
         
         $rental->moveDispatch();
         return response()->json($rental);
@@ -96,11 +94,7 @@ class ReservationController extends Controller {
       $rental = Rental::findOrFail($rentalId);
       $roomsId = $rental->getEnabledRoomsId();
       
-      $roomTask->setData(
-         $statDate,
-         $time,
-         $endDate         
-      );
+      $roomTask->setData($statDate, $time, $endDate);
 
       if(!$roomTask->isValidDataQuery()) {
           return response()->validation_error($roomTask->getMessage());
@@ -122,12 +116,7 @@ class ReservationController extends Controller {
       $rental = Rental::findOrFail($rentalId);
       $roomsId = $rental->getEnabledRoomsId();
 
-      $roomTask->setData(
-          $startDate,
-          $startTime,
-          null,
-         $departureTime
-      );
+      $roomTask->setData($startDate, $startTime, null, $departureTime);
 
       if(!$roomTask->isValidDataQuery()) {
           return response()->validation_error($roomTask->getMessage());
@@ -157,9 +146,6 @@ class ReservationController extends Controller {
     $rental->reservation = 0;
     $rental->forceSave();
 
-    /*$record = $rental->lastRecord();
-    $record->conciliate = 1;
-    $record->save();*/
 
     return response()->json(['message' => 'Reservación confirmada']);
   }
