@@ -3,6 +3,7 @@
 namespace App\Http\Tasks;
 
 use Carbon\Carbon;
+use App\Validators\ValidationException;
 
 class RentalTask {
   private $setting;
@@ -39,16 +40,38 @@ class RentalTask {
         $rental->syncRooms($roomIds);
     }
 
-    $rooms = $rental->rooms()
-    ->selectRooms()
-    ->whereIn('rooms.id', $roomIds)
-    ->get();
+    $rooms = $rental->whereInRooms($roomIds);
 
     $amountPerDay = $this->calculateAmountDay($startDate, $rental->departure_date);
     $amount = $this->calculateTotal($rooms, $amountPerDay);
 
     $rental->amount += $amount;
     
+    $this->savePayment($rental);
+  }
+
+  public function addRoomsHour($rental, $roomIds) {
+    $rental->syncRooms($roomIds);
+
+    if($rental->reservation) {
+        $startTime = $rental->arrival_time;
+    } else {
+        $startTime = currentHour();
+    }
+
+    $rooms = $rental->whereInRooms($roomIds);
+
+    $amountPerHour = $this->calculateAmountHour(
+      $rental->arrival_date,
+      $startTime,
+      $rental->departure_time,
+      $rental->departure_date
+    );
+
+    $amount = $this->calculateTotal($rooms, $amountPerHour);
+
+    $rental->amount += $amount;
+
     $this->savePayment($rental);
   }
 
@@ -65,6 +88,12 @@ class RentalTask {
   public function calculateAmountHour($startDate, $startTime, $endTime, $endDate) {
     if($endDate != null) {
         $toTime = strtotime($endDate.' '.$endTime);
+        $currentDate = currentDate();
+
+        if($currentDate == $endDate) {
+            $startDate = $currentDate;
+        }
+
     } else {
         $toTime = strtotime($startDate.' '.$endTime);  
     }
@@ -88,8 +117,6 @@ class RentalTask {
 
 
   public function savePayment($rental) {
-     var_dump($rental->amount);
-    
     $impost = $this->setting->calculateImpost($rental->amount);
     $total = sumNum($rental->amount, $impost);
 
@@ -97,6 +124,39 @@ class RentalTask {
     $rental->amount_total = $total;
 
     $rental->forceSave();
+  }
+
+  public function validCheck($rental) {
+    if($rental->isCheckout()) {
+        $message = 'Este hospedaje ya tiene salida';
+
+        throw new ValidationException("Error Processing Request", $message);
+    }
+
+    if($rental->reservationExpired()) {
+        $message = 'La reservación ya expiro';
+
+        throw new ValidationException("Error Processing Request", $message);
+    }
+  }
+
+  public function validDate($rental) {
+    $date = currentDate();
+
+    $this->validCheck($rental);
+
+    if($rental->type == 'hours') {
+        $message = 'El hospedaje debe ser por días';
+
+        throw new ValidationException("Error Processing Request", $message);
+    }
+
+    if($rental->departure_date == $date) {
+        $message = 'No puede agregar habitaciones en la fecha de salida';
+
+        throw new ValidationException("Error Processing Request", $message);
+    }
+
   }
 
 }
