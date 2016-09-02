@@ -160,27 +160,26 @@ class RentalController extends Controller {
     $hour = currentHour();
 
     try {
+           $rentalTask->validDate($rental);
+           $roomIds = $request->get('room_ids');
 
-         $rentalTask->validDate($rental);
-         $roomIds = $request->get('room_ids');
+           if($rental->reservation && $rental->arrival_date >= $date) {
+              $date = $rental->arrival_date;
+              $hour = $rental->arrival_time;
+           }
 
-         if($rental->reservation && $rental->arrival_date >= $date) {
-            $date = $rental->arrival_date;
-            $hour = $rental->arrival_time;
-         }
+           $validRooms = $rentalValidator->isValidRoomDate($roomIds, $date, $rental->departure_date, $hour);
 
-         $validRooms = $rentalValidator->isValidRoomDate($roomIds, $date, $rental->departure_date, $hour);
+           if(!$validRooms) {
+             return response()->validation_error('Alguna de las habitaciones no esta disponible');
+           }
 
-         if(!$validRooms) {
-           return response()->validation_error('Alguna de las habitaciones no esta disponible');
-         }
+           $rentalTask->addRoomsDate($rental, $date, $roomIds);
+           $rental->moveDispatch();
 
-         $rentalTask->addRoomsDate($rental, $date, $roomIds);
-         $rental->moveDispatch();
-
-         return response()->json($rental);
+           return response()->json($rental);
     } catch (ValidationException $e) {
-         return response()->validation_error($e->getErrors());
+           return response()->validation_error($e->getErrors());
     }
 
    
@@ -192,29 +191,29 @@ class RentalController extends Controller {
 
     try {
 
-        $rentalTask->validHour($rental);
+          $rentalTask->validHour($rental);
 
-        $roomIds = $request->get('room_ids');
+          $roomIds = $request->get('room_ids');
 
-        $validRooms = $rentalValidator->isValidRoomHour(
-          $roomIds,
-          $rental->arrival_time,
-          $rental->departure_time,
-          $rental->arrival_date,
-          $rental->departure_date
-        );
+          $validRooms = $rentalValidator->isValidRoomHour(
+            $roomIds,
+            $rental->arrival_time,
+            $rental->departure_time,
+            $rental->arrival_date,
+            $rental->departure_date
+          );
 
-        if(!$validRooms) {
-          return response()->validation_error('Alguna de las habitaciones no esta disponible');
-        }
+          if(!$validRooms) {
+            return response()->validation_error('Alguna de las habitaciones no esta disponible');
+          }
 
-        $rentalTask->addRoomsHour($rental, $roomIds);
-        $rental->moveDispatch();
+          $rentalTask->addRoomsHour($rental, $roomIds);
+          $rental->moveDispatch();
 
-        return response()->json($rental);
+          return response()->json($rental);
 
     } catch (ValidationException $e) {
-         return response()->validation_error($e->getErrors());
+          return response()->validation_error($e->getErrors());
     }
   }
 
@@ -224,21 +223,21 @@ class RentalController extends Controller {
 
     try {
 
-        $rentalTask->validCheck($rental);
+          $rentalTask->validCheck($rental);
 
-        if($rental->type == 'days') {
-            return response()->validation_error('El hospedaje debe ser por horas');
-        }
+          if($rental->type == 'days') {
+              return response()->validation_error('El hospedaje debe ser por horas');
+          }
 
-        $inputData = $request->only('renovate_hour', 'room_ids', 'amount_renovate');
-        $oldDepartureTime = $rental->departure_time;
+          $inputData = $request->only('renovate_hour', 'room_ids', 'amount_renovate');
+          $oldDepartureTime = $rental->departure_time;
 
-        if($rental->update($inputData)) {
-           $rentalTask->renovateHour(
-              $rental, 
-              $inputData['room_ids'], 
-              $inputData['amount_renovate'], 
-              $oldDepartureTime
+          if($rental->update($inputData)) {
+             $rentalTask->renovateHour(
+               $rental, 
+               $inputData['room_ids'], 
+               $inputData['amount_renovate'], 
+               $oldDepartureTime
            );
 
            $rental->moveDispatch();
@@ -258,62 +257,55 @@ class RentalController extends Controller {
 
     try {
         
-        $rentalTask->validRenovate($rental);
+          $rentalTask->validRenovate($rental);
     
-        $oldType = $rental->type;
+          $oldType = $rental->type;
 
-        $rental->setOldDeparture($oldType);           
-        $rental->type = 'days';
+          $rental->setOldDeparture($oldType);           
+          $rental->type = 'days';
 
-        $rental->departure_time = createHour('12:00:00');
+          $rental->departure_time = createHour('12:00:00');
 
-        $inputData = $request->only('departure_date', 'room_ids');
+          $inputData = $request->only('departure_date', 'room_ids');
 
-        if($rental->update($inputData)) {
-           $rentalTask->renovateDate($rental, $inputData['room_ids'], $oldType);
-           $rental->moveDispatch();
+          if($rental->update($inputData)) {
+             $rentalTask->renovateDate($rental, $inputData['room_ids'], $oldType);
+             $rental->moveDispatch();
 
-           return response()->json($rental);
-        } else {
-           return response()->validation_error($rental->errors());
-        }
+             return response()->json($rental);
+          } else {
+             return response()->validation_error($rental->errors());
+          }
 
     } catch (ValidationException $e) {
-         return response()->validation_error($e->getErrors());
+          return response()->validation_error($e->getErrors());
     }
   }
 
 
-  public function checkout(Request $request, $rentalId) {
+  public function checkout(Request $request, RentalTask $rentalTask, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
-    $date = currentDate();
 
-    if($rental->checkout) {
-        return response()->validation_error('Habitación ya tiene salida');
+    try {
+          $rentalTask->validCheck($rental);
+
+          if($rental->reservation) {
+             return response()->validation_error('Debe confirmar reservación');
+          }
+
+          if($rental->type == 'days') {
+              $date = currentDate();
+              $rental->checkout_date = $date;
+          }
+
+          $rental->checkout = 1;
+          $rental->forceSave();
+          $rental->moveDispatch();
+
+          return response()->json(['message' => 'Salida confirmada']);
+    } catch (ValidationException $e) {
+          return response()->validation_error($e->getErrors());
     }
-
-    if($rental->reservation) {
-        return response()->validation_error('Debe confirmar reservación');
-    }
-
-    if($rental->arrival_date == $date && $rental->type  == 'days') {
-        return response()->validation_error('El hospedaje debe tener por los menos un dia para salida');
-    }
-
-    if($rental->type != 'hours') {
-        $rental->deleteCheckRoomsDate($date);
-        $rental->changeCheckoutDate($date);
-    }
-
-    if($date < $rental->departure_date && $rental->type == 'days') {
-        $rental->checkout_date = $date;
-    }
-     
-    $rental->checkout = 1;
-    $rental->forceSave();
-    $rental->moveDispatch();
-
-    return response()->json(['message' => 'Salida confirmada']);
   }
 
 
