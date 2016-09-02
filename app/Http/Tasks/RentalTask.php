@@ -75,6 +75,36 @@ class RentalTask {
     $this->savePayment($rental);
   }
 
+  public function renovateDate($rental, $renovateRoomIds, $oldType) {
+    $roomsEnabled = $rental->getEnabledRoomsId();
+    $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
+
+    if(count($oldRoomIds) > 0) {
+        $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
+        $newRoomsSync = syncData($newRoomIds, $rental->old_departure);
+        $oldRoomsSync = syncDataCheckout($oldRoomIds, $rental->old_departure);
+
+        if($oldType == 'hours') {
+            $rental->syncRooms($renovateRoomIds, true);
+        } else {
+            $rental->syncRooms($newRoomsSync);
+            $rental->syncRooms($oldRoomsSync);
+        }
+    } 
+
+    if($oldType == 'hours')  {
+        $rental->amount = 0;
+    }
+
+    $rooms = $rental->whereInRooms($renovateRoomIds);
+    $amountPerDay = $this->calculateAmountDay($rental->old_departure, $rental->departure_date);
+    $amount = $this->calculateTotal($rooms, $amountPerDay);
+
+    $rental->amount += $amount;
+
+    $this->savePayment($rental);
+  }
+
   public function calculateAmountDay($startDate, $endDate) {
     $startDate = Carbon::parse($startDate);
     $endDate = Carbon::parse($endDate);
@@ -154,6 +184,23 @@ class RentalTask {
     if($rental->departure_date == $date) {
         $message = 'No puede agregar habitaciones en la fecha de salida';
 
+        throw new ValidationException("Error Processing Request", $message);
+    }
+
+  }
+
+  public function validHour($rental) {
+    $this->validCheck($rental);
+    
+    if($rental->type == 'days') {
+        $message = 'El hospedaje debe ser por horas';
+
+        throw new ValidationException("Error Processing Request", $message);
+    }
+
+    if($rental->isTimeout()) {
+        $message = 'Hora de hospedaje ya termino';
+        
         throw new ValidationException("Error Processing Request", $message);
     }
 
