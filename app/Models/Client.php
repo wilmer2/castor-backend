@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use LaravelArdent\Ardent\Ardent;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Client extends Ardent {
+
+  use SoftDeletes;
   
-  protected $fillable = ['identity_card', 'first_name', 'last_name', 'nationality'];
+  protected $fillable = ['identity_card', 'first_name', 'last_name', 'nationality', 'deleted_at'];
 
   public static $rules = [
     'identity_card' => 'required|unique:clients,identity_card',
@@ -24,6 +27,10 @@ class Client extends Ardent {
     'nationality.in' => 'La nacionalidad es inválida'
   ];
 
+  public function rentals() {
+    return $this->hasMany(Rental::class);
+  }
+
   public function scopeSearchForIdentityCard($query, $identityCard) {
     $client = $query->where('identity_card', $identityCard)->first();
 
@@ -32,5 +39,36 @@ class Client extends Ardent {
     } else {
         abort(404);
     }
+  }
+
+  public function getData() {
+    $reservation = $this->getReservation();
+    $rentals = $this->getRentals();
+
+     $data = [
+       'id' => $this->id,
+       'identity_card' => $this->identity_card,
+       'first_name' => $this->first_name,
+       'last_name' => $this->last_name,
+       'nationality' => $this->nationality,
+       'rentals' => $rentals,
+       'reservations' => $reservation
+     ];
+
+     return $data;
+  }
+
+  public function getReservation() {
+    return $this->rentals()
+    ->where('reservation', 1)
+    ->orderBy('arrival_date', 'desc')
+    ->get();
+  }
+
+  public function getRentals() {
+    return $this->rentals()
+    ->where('reservation', 0)
+    ->orderBy('arrival_date', 'desc')
+    ->get();
   }
 }
