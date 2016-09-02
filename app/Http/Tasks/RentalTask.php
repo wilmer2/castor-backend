@@ -77,7 +77,7 @@ class RentalTask {
 
   public function renovateDate($rental, $renovateRoomIds, $oldType) {
     $roomsEnabled = $rental->getEnabledRoomsId();
-    $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
+    
 
     if(count($oldRoomIds) > 0) {
         $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
@@ -101,6 +101,32 @@ class RentalTask {
     $amount = $this->calculateTotal($rooms, $amountPerDay);
 
     $rental->amount += $amount;
+
+    $this->savePayment($rental);
+  }
+
+  public function renovateHour($rental, $renovateRoomIds, $amountRenovate, $oldDepartureTime) {
+    $rental->extra_hour = null;
+
+    if($rental->departure_data == null) {
+        $departureDate = $rental->arrival_date;
+    } else {
+        $departureDate = $rental->departure_date;
+    }
+
+    $roomsEnabled = $rental->getEnabledRoomsId();
+    $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
+    $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
+
+    if(count($oldRoomIds) > 0) {
+       $newRoomsSyncTime = syncCheckinHour($newRoomIds, $departureDate, $oldDepartureTime);
+       $oldRoomsSyncTime = syncCheckoutHour($oldRoomIds, $departureDate, $oldDepartureTime);
+
+       $rental->syncRooms($newRoomsSyncTime);
+       $rental->syncRooms($oldRoomsSyncTime);
+    }
+
+    $rental->amount += $amountRenovate;
 
     $this->savePayment($rental);
   }
@@ -204,6 +230,23 @@ class RentalTask {
         throw new ValidationException("Error Processing Request", $message);
     }
 
+  }
+
+  public function validRenovate($rental) {
+    $this->validCheck($rental);
+    $date = currentDate();
+
+     if($rental->reservation) {
+         $message = 'La reservación debe ser confirmada';
+        
+         throw new ValidationException("Error Processing Request", $message);
+     }
+
+     if($rental->type == 'days' && $rental->departure_date  > $date) {
+        $message = 'Solo puede renovar en la fecha de salida';
+
+        throw new ValidationException("Error Processing Request", $message);
+     }
   }
 
 }
