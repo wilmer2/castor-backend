@@ -21,7 +21,15 @@ class RentalController extends Controller {
     ->where('reservation', 0)
     ->get();
 
-    return response()->json($rentals);
+    foreach ($rentals as $rental) {
+      $rental->isCheckout();
+    }
+
+    $filterRentals = $rentals->filter(function ($rental, $key) {
+      return $rental->checkout == 0;
+    });
+
+    return response()->json($filterRentals);
   }
 
   public function store(Request $request, RentalTask $rentalTask) {
