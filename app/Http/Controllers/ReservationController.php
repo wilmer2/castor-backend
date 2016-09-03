@@ -12,6 +12,22 @@ use App\Http\Tasks\RoomTask;
 
 class ReservationController extends Controller {
 
+  public function getReservation($startDate, $endDate) {
+    $reservations = Rental::where('reservation', 1)
+    ->whereBetween('arrival_date', array($startDate, $endDate))
+    ->get();
+
+    foreach ($reservations as $reservation) {
+      $reservation->reservationExpired();
+    }
+
+    $filterReservations = $reservations->filter(function ($reservation, $key) {
+      return $reservation->reservation == 1;
+    });
+
+    return response()->json($filterReservations);
+  }
+
   public function addReservation(Request $request, RentalTask $rentalTask) {
     if($request->has('clientId')) {
         $client = Client::findOrFail($request->get('clientId'));
@@ -150,11 +166,4 @@ class ReservationController extends Controller {
     return response()->json(['message' => 'Reservación confirmada']);
   }
 
-  public function getReservation($startDate, $endDate) {
-    $reservations = Rental::where('reservation', 1)
-    ->whereBetween('arrival_date', array($startDate, $endDate))
-    ->get();
-
-    return response()->json($reservations);
-  }
 }
