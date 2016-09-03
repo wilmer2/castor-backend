@@ -9,6 +9,7 @@ use App\Models\Client;
 use App\Models\Rental;
 use App\Http\Tasks\RentalTask;
 use App\Http\Tasks\RoomTask;
+use App\Validators\ValidationException;
 
 class ReservationController extends Controller {
 
@@ -142,28 +143,31 @@ class ReservationController extends Controller {
       return response()->json($rooms);
   }
 
-  public function confirmReservation(Request $request, $rentalId) {
+  public function confirmReservation(Request $request, RentalTask $rentalTask, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
-    $date = currentDate();
 
-    if($rental->isCheckout()) {
-        return response()->validation_error('El hospedaje ya tiene salida');
+    try {
+           $rentalTask->validCheck($rental);
+           $date = currentDate();
+
+           if(!$rental->reservation) {
+              return response()->validation_error('Reservación ya fue confirmada');
+           }
+
+           if($rental->arrival_date > $date) {
+              return response()->validation_error('Aun no es la fecha de reservación');
+           }
+
+           $rental->state = 'conciliado';
+
+           $rental->reservation = 0;
+           $rental->forceSave();
+
+           return response()->json(['message' => 'Reservación confirmada']);
+    } catch (ValidationException $e) {
+           return response()->validation_error($e->getErrors());
     }
-
-    if(!$rental->reservation) {
-        return response()->validation_error('La reservación  ya fue confirmada');
-    }
-
-    if($rental->arrival_date > $date) {
-        return response()->validation_error('Aun no es la fecha de reservación');
-    }
-
-    $rental->state = 'conciliado';
-    $rental->reservation = 0;
-    $rental->forceSave();
-
-
-    return response()->json(['message' => 'Reservación confirmada']);
+    
   }
 
 }
