@@ -9,8 +9,8 @@ function createHour($hour) {
 
 function sumHour($hour, $sumHour) {
    $time = explode(':', $sumHour);
-   $addHour = date('H:i', strtotime($hour. '+ '. $time[0].' hours'));
-   $totalTime = date('H:i', strtotime($addHour. '+'.$time[1].' minutes'));
+   $addHour = date('H:i:s', strtotime($hour. '+ '. $time[0].' hours'));
+   $totalTime = date('H:i:s', strtotime($addHour. '+'.$time[1].' minutes'));
 
    return $totalTime;
 }
@@ -65,6 +65,28 @@ function syncCheckoutHour($roomIds, $date, $time) {
   $syncDataCheckTimeout = array_combine($roomIds, $pivotData);
 
   return $syncDataCheckTimeout;
+}
+
+function syncWithPrice($roomId, $price, $type, $checkIn = null) {
+  if($checkIn == null) {
+      $sync = [$roomId => ['price_base' => $price]];
+  } else {
+      if($type == 'hours') {
+          $time = currentHour();
+
+          $sync = [$roomId => [
+            'check_in' => $checkIn, 
+            'price_base' => $price, 
+            'check_timein' => $time
+          ]];
+      } else {
+          $sync = [$roomId => ['check_in' => $checkIn, 'price_base' => $price]];
+
+      }
+
+  }
+
+  return $sync;
 }
 
 function calculateTotalHours($fromTime, $toTime) {
