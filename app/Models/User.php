@@ -15,7 +15,7 @@ class User extends Authenticatable {
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password',
+        'name', 'email', 'password', 'active'
     ];
 
     /**
@@ -29,6 +29,16 @@ class User extends Authenticatable {
 
     public function moves() {
       return $this->hasMany(Move::class);
+    }
+
+     public function loadRole() {
+       if($this->hasRole('admin')) {
+         $this->role = 'admin';
+       } elseif ($this->hasRole('super')) {
+         $this->role = 'super';
+       } else {
+         $this->role = 'user';
+       }
     }
 }
     
