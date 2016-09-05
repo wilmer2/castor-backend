@@ -14,7 +14,7 @@ class MoveController extends Controller {
     $moves = Move::amountMove()
     ->whereBetween('date', array($startDate, $endDate))
     ->get();
-
+    
     return response()->json($moves);
   }
 }
