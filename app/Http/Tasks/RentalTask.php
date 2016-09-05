@@ -4,6 +4,7 @@ namespace App\Http\Tasks;
 
 use Carbon\Carbon;
 use App\Validators\ValidationException;
+use App\Models\Move;
 
 class RentalTask {
   private $setting;
@@ -27,9 +28,12 @@ class RentalTask {
         );
     }
 
-    $rental->amount = $this->calculateTotal($rooms, $amount);
+    $amountPerRoom = $rooms->count() * $amount;
+
+    $rental->amount = $this->calculateTotal($rental, $rooms, $amountPerRoom);
 
     $this->savePayment($rental);
+    $this->assingMove($rental);
   }
 
   public function addRoomsDate($rental, $startDate, $roomIds) {
@@ -43,7 +47,8 @@ class RentalTask {
     $rooms = $rental->whereInRooms($roomIds);
 
     $amountPerDay = $this->calculateAmountDay($startDate, $rental->departure_date);
-    $amount = $this->calculateTotal($rooms, $amountPerDay);
+    $amountPerRoom = $rooms->count() * $amountPerDay;
+    $amount = $this->calculateTotal($rental, $rooms, $amountPerRoom);
 
     $rental->amount += $amount;
     
@@ -51,12 +56,15 @@ class RentalTask {
   }
 
   public function addRoomsHour($rental, $roomIds) {
-    $rental->syncRooms($roomIds);
-
     if($rental->reservation) {
         $startTime = $rental->arrival_time;
+        $rental->syncRooms($roomIds);
     } else {
+        $date = currentDate();
         $startTime = currentHour();
+
+        $roomsSyncTime = syncCheckinHour($roomIds, $date, $startTime);
+        $rental->syncRooms($roomsSyncTime);
     }
 
     $rooms = $rental->whereInRooms($roomIds);
@@ -68,7 +76,8 @@ class RentalTask {
       $rental->departure_date
     );
 
-    $amount = $this->calculateTotal($rooms, $amountPerHour);
+    $amountPerRoom = $rooms->count() * $amountPerHour;
+    $amount = $this->calculateTotal($rental, $rooms, $amountPerRoom);
 
     $rental->amount += $amount;
 
@@ -77,16 +86,18 @@ class RentalTask {
 
   public function renovateDate($rental, $renovateRoomIds, $oldType) {
     $roomsEnabled = $rental->getEnabledRoomsId();
+    $roomsEnabled = $rental->getEnabledRoomsId();
+    $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
+    $newRoomIds = [];
     
-
     if(count($oldRoomIds) > 0) {
-        $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
-        $newRoomsSync = syncData($newRoomIds, $rental->old_departure);
-        $oldRoomsSync = syncDataCheckout($oldRoomIds, $rental->old_departure);
-
         if($oldType == 'hours') {
             $rental->syncRooms($renovateRoomIds, true);
         } else {
+            $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
+            $newRoomsSync = syncData($newRoomIds, $rental->old_departure);
+            $oldRoomsSync = syncDataCheckout($oldRoomIds, $rental->old_departure);
+
             $rental->syncRooms($newRoomsSync);
             $rental->syncRooms($oldRoomsSync);
         }
@@ -94,18 +105,23 @@ class RentalTask {
 
     if($oldType == 'hours')  {
         $rental->amount = 0;
+        $newRoomIds = $renovateRoomIds;
     }
 
-    $rooms = $rental->whereInRooms($renovateRoomIds);
     $amountPerDay = $this->calculateAmountDay($rental->old_departure, $rental->departure_date);
-    $amount = $this->calculateTotal($rooms, $amountPerDay);
+    $amount = count($renovateRoomIds) * $amountPerDay;
+
+    if(count($newRoomIds) > 0) {
+        $rooms = $rental->whereInRooms($newRoomIds);
+        $amount = $this->calculateTotal($rental, $rooms, $amount);
+    }
 
     $rental->amount += $amount;
 
     $this->savePayment($rental);
   }
 
-  public function renovateHour($rental, $renovateRoomIds, $amountRenovate, $oldDepartureTime) {
+  public function renovateHour($rental, $renovateRoomIds, $oldDepartureTime) {
     $rental->extra_hour = null;
 
     if($rental->departure_data == null) {
@@ -116,9 +132,10 @@ class RentalTask {
 
     $roomsEnabled = $rental->getEnabledRoomsId();
     $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
-    $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
+    $newRoomIds = [];
 
     if(count($oldRoomIds) > 0) {
+       $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
        $newRoomsSyncTime = syncCheckinHour($newRoomIds, $departureDate, $oldDepartureTime);
        $oldRoomsSyncTime = syncCheckoutHour($oldRoomIds, $departureDate, $oldDepartureTime);
 
@@ -126,7 +143,21 @@ class RentalTask {
        $rental->syncRooms($oldRoomsSyncTime);
     }
 
-    $rental->amount += $amountRenovate;
+    $amountPerHour = $this->calculateAmountHour(
+      $rental->arrival_date,
+      $oldDepartureTime,
+      $rental->departure_time,
+      $rental->departure_date
+    );
+
+    $amount = count($renovateRoomIds) * $amountPerHour;
+
+    if(count($newRoomIds) > 0) {
+        $rooms = $rental->whereInRooms($newRoomIds);
+        $amount = $this->calculateTotal($rental, $rooms, $amount);
+    }
+
+    $rental->amount += $amount;
 
     $this->savePayment($rental);
   }
@@ -161,14 +192,14 @@ class RentalTask {
     return $amount;
   }
 
-  public function calculateTotal($rooms, $amount) {
-    $total = $rooms->count() * $amount;
-
+  public function calculateTotal($renatal, $rooms, $amount) {
     foreach ($rooms as $room) {
-      $total += $room->increment;
+      $amount += $room->increment;
+      $room->pivot->price_base = $room->increment;
+      $room->pivot->save();
     }
 
-    return $total;
+    return $amount;
   }
 
 
@@ -182,7 +213,133 @@ class RentalTask {
     $rental->forceSave();
   }
 
+  public function assingMove($rental) {
+    $user = currentUser();
+    $move = $this->getMove($user->id, $rental->arrival_date);
+
+    if($rental->move_id == null) {
+        $rental->move_id = $move->id;
+        $rental->forceSave();
+    } else {
+        $moveRental = Move::find($rental->move_id);
+
+        if($moveRental->date != $rental->arrival_date) {
+            $rental->move_id = $move->id;
+            $rental->forceSave();
+
+            $moveRental->checkRentals();            
+        }
+    }
+  }
+
+  public function removeRoom($rental, $roomId) {
+    if($rental->rooms()->count() == 1) {
+        $mesage = 'El hospedaje debe tener al menos una habitación';
+
+        throw new ValidationException("Error Processing Request", $message);
+    }
+
+    $room = $rental->findRoom($roomId);
+    
+    if(!$room) {
+        $message = 'Habitación no encontrada';
+
+        throw new ValidationException("Error Processing Request", $message);
+    }
+
+    $restPayment = $this->getRestPayment($rental, $room);
+
+    $room->state = 'disponible';
+    $room->save();
+    
+    $rental->rooms()->detach($roomId);
+    $rental->amount -= $restPayment;
+    $this->savePayment($rental);
+  }
+
+  public function getRestPayment($rental, $room) {
+    if($room->pivot->check_in != null) {
+        $startDate = $room->pivot->check_in;
+    } else {
+        $startDate = $rental->arrival_date;
+    }
+
+    if($rental->type == 'days') {
+        $amountRest = $this->calculateAmountDay($startDate, $rental->departure_date);
+    } else {
+        if($room->pivot->check_timein != null) {
+            $startTime = $room->pivot->check_timein;
+        } else {
+            $startTime = $rental->arrival_time;
+        }
+
+        $amountRest = $this->calculateAmountHour(
+          $startDate,
+          $startTime, 
+          $rental->departure_time,
+          $rental->departure_date
+        );
+    }
+
+    $amountRest += $room->increment;
+
+    return $amountRest;
+  }
+
+  public function changeRoom($rental, $newRoom, $oldRoom, $state) {
+     if($oldRoom->pivot->check_out != null) {
+        $message = 'La habitación ya tiene salida';
+
+        throw new ValidationException("Error Processing Request", $message);
+    }
+
+    $date = currentDate();
+    $checkIn = $oldRoom->pivot->check_in;
+
+    if(
+        $rental->reservation || 
+        $rental->arrival_date == $date || 
+        $rental->type == 'hours' ||
+        $checkIn != null &&
+        $checkIn == $date
+    ) { 
+        $rental->amount -= $oldRoom->pivot->price_base;
+        $rental->rooms()->detach($oldRoom->roomId);
+
+        $sync = syncWithPrice($newRoom->id, $newRoom->type->increment, $rental->type, $checkIn);
+    } else {
+        $oldRoom->pivot->check_out = $date;
+        $oldRoom->pivot->save();
+        
+        $sync = syncWithPrice($newRoom->id, $newRoom->type->increment, $rental->type, $date);
+    }
+
+    $rental->amount += $newRoom->type->increment;
+    $oldRoom->state = $state;
+    $oldRoom->save();
+    $rental->syncRooms($sync);
+    
+    $this->savePayment($rental);
+  }
+
+  private function getMove($userId, $date) {
+     $move =  Move::where('user_id', $userId)
+     ->where('date', $date)
+     ->first();
+
+     if(!$move) {
+        $move = new Move();
+        $move->date = $date;
+        $move->user_id = $userId;
+
+        $move->save();
+     }
+
+     return $move;
+  }
+
   public function validCheck($rental) {
+
     if($rental->isCheckout()) {
         $message = 'Este hospedaje ya tiene salida';
 
