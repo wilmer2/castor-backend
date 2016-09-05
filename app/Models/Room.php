@@ -21,13 +21,13 @@ class Room extends Ardent {
    ];
 
    public function type() {
-     return $this->belongsTo(Type::class, 'id');
+     return $this->belongsTo(Type::class, 'type_id');
    }
 
    public function rentals() {
      return $this->belongsToMany(Rental::class)
      ->withTimestamps()
-     ->withPivot('check_out', 'check_in', 'check_timeout', 'check_timein');
+     ->withPivot('check_out', 'check_in', 'check_timeout', 'check_timein', 'price_base');
    }
 
    /** Model Querys */
@@ -40,9 +40,11 @@ class Room extends Ardent {
           'types.title',
           'types.description',
           'types.increment',
+          'types.img_url',
           'types.id as typeId',
           'rooms.id as roomId'
-        );
+        )
+        ->where('state', '<>', 'desahabilitada');
    }
 
    public function scopeDateRooms(
@@ -421,6 +423,12 @@ class Room extends Ardent {
          $rentalId
        ) 
        ->whereIn('rooms.id', $roomsIds);
+    }
+
+    public function hasRental() {
+      return $this->whereHas('rentals', function ($q) {
+          $q->where('checkout', 0);
+      });
     }
 
 
