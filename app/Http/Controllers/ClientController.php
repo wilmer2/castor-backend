@@ -46,4 +46,12 @@ class ClientController extends Controller {
     }
   }
 
+  public function delete($clientId) {
+    $client = Client::findOrFail($clientId);
+
+    $client->delete();
+
+    return response()->json(['message' => 'Cliente ha sido borrado']);
+  }
+
 }
