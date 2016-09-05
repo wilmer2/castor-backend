@@ -44,7 +44,6 @@ class CheckRentalRooms
             }
 
             $rental->stateRoomCheckout();
-            $rental->rentalDayWithRoomsHour();
             
             $this->stateRoomWithoutRental();
         }
