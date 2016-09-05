@@ -11,8 +11,8 @@ class Rental extends Ardent {
   public $autoPurgeRedundantAttributes = true;
   public $extra_hour = null;
   public $checkout_room = false;
+  public $old_departure = null;
   protected $rooms_validation = [];
-  protected $old_departure = null;
   protected $search_date = null;
 
   protected $fillable = [
@@ -23,21 +23,17 @@ class Rental extends Ardent {
     'arrival_date',
     'departure_date',
     'checkout_date',
-    'payment_type',
     'type',
     'amount',
     'room_ids',
     'renovate_hour',
     'state',
     'reservation',
-    'checkout',
-    'discount',
-    'date_hour'
+    'checkout'
   ];
 
   public static $rules = [
     'room_ids' => 'required|exists:rooms,id',
-    //'payment_type' => 'required|in:transferencia,punto,efectivo',
     'type' => 'required|in:hours,days',
     'arrival_date' => 'required_if:reservation,1|date',
     'arrival_time' => 'required_if:reservation,1|date_format:H:i:s|date_hour',
@@ -45,7 +41,7 @@ class Rental extends Ardent {
     'renovate_hour' => 'sometimes|required|in:01:00:00,02:00:00,03:00:00,04:00:00',
     'departure_time' => 'date_format:H:i:s',
     'state' => 'required_if:reservation,1|in:conciliado,pendiente',
-    'discount' => 'numeric'
+    'amount_renovate' => 'numeric'
   ];
 
   public static $customMessages = [
@@ -63,12 +59,9 @@ class Rental extends Ardent {
     'type.in' => 'El tipo es inválido',
     'renovate_hour.required' => 'La hora de renovacion es obligatoria',
     'renovate_hour.in' => 'La hora para renovar es inválida',
-    /*'payment_type.required' => 'El tipo de pago es obligatorio',
-    'payment_type.in' => 'El tipo de pago no esta entre la opciones',*/
     'extra_hour.date_format' =>  'La hora de finalización es inválida', 
     'room_ids.required' => 'Las habitaciones son obligatorias',
     'room_ids.exists' => 'Alguna de las habitaciones no existe ',
-    'discount.numeric' => 'El descuento debe ser un número',
     'state.required_if' => 'El estado de pago es obligatorio',
     'state.in' => 'El estado de pago no es inválido'
   ];
@@ -77,7 +70,7 @@ class Rental extends Ardent {
     parent::__construct($attributes);
 
     $this->purgeFilters[] = function($key) {
-        $purge = ['room_ids', 'renovate_hour'];
+        $purge = ['room_ids', 'renovate_hour', 'amount_renovate'];
         return ! in_array($key, $purge);
     };
   }
@@ -89,7 +82,7 @@ class Rental extends Ardent {
   public function rooms() {
     return $this->belongsToMany(Room::class)
      ->withTimestamps()
-     ->withPivot('check_in', 'check_out', 'check_timeout', 'check_timein', 'pass_time');
+     ->withPivot('check_in', 'check_out', 'check_timeout', 'check_timein', 'price_base');
   }
   
   public function move() {
@@ -149,7 +142,7 @@ class Rental extends Ardent {
   }
 
   public function isValidRenovateDate() {
-    if($this->old_departure != null && $this->old_departure > $this->departure_date) {
+    if($this->old_departure != null && $this->old_departure >= $this->departure_date) {
         return false;
     } 
 
@@ -189,6 +182,49 @@ class Rental extends Ardent {
      }
 
      return $valid;
+  }
+
+  public function getData() {
+    $rooms = $this->rooms()
+    ->get();
+
+    $data = [
+      'id' => $this->id,
+      'arrival_time' => $this->arrival_time,
+      'departure_time' => $this->departure_time,
+      'arrival_date' => $this->arrival_date,
+      'departure_date' => $this->departure_date,
+      'checkout_date' => $this->checkout_date,
+      'type' => $this->type,
+      'amount' => $this->amount,
+      'state' => $this->state,
+      'reservation' => $this->reservation,
+      'checkout' => $this->checkout,
+      'available_change' => $this->availableChange(),
+      'rooms' => $rooms
+    ];
+
+    return $data;
+  }
+
+  public function availableChange() {
+    $date = currentDate();
+
+    if(
+        !$this->reservation && 
+        !$this->checkout && 
+        $this->type == 'hours' &&
+        $this->arrival_date == $date
+    ) {
+        $maxHour = sumHour($this->arrival_time, '01:00:00');
+        $currentHour = currentHour();
+
+        if($currentHour > $maxHour) {
+            return false;
+        }
+    }
+
+    return true;
   }
 
   public function addDateTime() {
@@ -239,14 +275,21 @@ class Rental extends Ardent {
     }
   }
 
-  public function setOldDeparture() {
-    if($this->departure_date == null) {
+  public function setOldDeparture($oldType) {
+    $date = currentDate();
+
+    if(
+        $this->departure_date == null || 
+        $oldType == 'hours' && 
+        $this->departure_date != null &&
+        $this->departure_date > $date
+    ) {
         $this->old_departure = $this->arrival_date;
     } else {
         $this->old_departure = $this->departure_date;
     }
     
-    $this->search_date = currentDate();
+    $this->search_date = $date;
   }
 
   public function isCheckout() {
@@ -297,57 +340,18 @@ class Rental extends Ardent {
         $this->reservation &&
         $this->departure_date == null &&
         $this->arrival_date < $currentDate
-      ) {
-        return true;
-    } else {
-        return false;
+      ) { 
+          if($this->state != 'conciliado') {
+              $this->state = 'expirado';
+          }
+
+          $this->reservation = 0;
+          $this->checkout = 1;
+          $this->forceSave();
     }
+
+    return $this->checkout;
   }
-
-  /*public function registerRecord() {
-    $record = $this->records()
-    ->where('first', 1);
-
-    if($record->count() == 1) {
-        $record = $record->first();
-    } else {
-        $record = new Record();
-        $record->first = 1;
-    }
-
-    $this->setRecord($record, $this->payment_type);
-  }*/
-
-  /*public function setRecord($record, $paymentType) {
-    if($this->departure_time == null) {
-        $record->departure_time = createHour('12:00:00');
-    } else {
-        $record->departure_time = $this->departure_time;
-    }
-
-    if($this->move_id != null) {
-        $record->move_id = $this->move_id;
-    }
-
-    if($this->state == 'conciliado') {
-        $record->conciliate = 1;
-    }
-
-    $record->arrival_date = $this->arrival_date;
-
-    if($this->checkout_date != null) {
-        $record->departure_date = $this->checkout_date;
-    } else {
-        $record->departure_date = $this->departure_date;
-    }
-    
-    $record->payment_type = $paymentType;
-    
-    $record->type = $this->type;
-    $record->rental_id = $this->id;
-
-    $record->save();
-  }*/
 
   public function confirmCheckoutRoom() {
      $enabledRooms = $this->getEnabledRooms();
@@ -358,108 +362,21 @@ class Rental extends Ardent {
      }
   }
 
-  public function checkRoomsRenovateHour($renovateRoomIds, $departureTime, $departureDate) {
-    $date = currentDate();
-    $roomsEnabled = $this->getEnabledRoomsId();
-    $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
-    $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
-
-    if($this->type == 'hours') {
-        if(count($oldRoomIds) > 0) {
-
-            if($departureDate == null) {
-               $departureDate = $this->arrival_date;
-            }
-
-            $newRoomsSyncTime = syncCheckinHour($newRoomIds, $departureDate, $departureTime);
-            $oldRoomsSyncTime = syncCheckoutHour($oldRoomIds, $departureDate, $departureTime);
-
-            $this->syncRooms($newRoomsSyncTime);
-            $this->syncRooms($oldRoomsSyncTime);
-        } else {
-            $this->syncRooms($renovateRoomIds);
-        }
-    } else {
-        if(count($oldRoomIds) > 0) {
-           $oldRoomsSyncDate = syncDataCheckout($oldRoomIds, $this->departure_date);
-           $newRoomsSyncDate = syncData($newRoomIds, $this->departure_date);
-
-           $this->syncRooms($newRoomsSyncDate);
-           $this->syncRooms($oldRoomsSyncDate);
-        }
-    }
-  }
-
-  public function checkRoomsRenovateDate($renovateRoomIds, $staticRoomIds) {
-     if(count($staticRoomIds) > 0) {
-        $roomCheckout = $this->getRoomsIdCheckout();
-        $this->checkEnabledRooms($renovateRoomIds, $roomCheckout);
-        
-        $staticRooms = syncDataCheckout($staticRoomIds, $this->old_departure);
-
-        $this->syncRooms($staticRooms);
-
-     } else {
-        $this->renovateDateSync($renovateRoomIds);
-     }
-
-     //$this->deleteUnnecessaryRecords();
-     $this->detachSameCheckinCheckout();
-  }
-
-  public function renovateDateSync($renovateRoomIds) {
-    $diffDays = diffDays($this->arrival_date, $this->departure_date);
-    $roomCheckout = $this->getRoomsIdCheckout();
-
-    if($diffDays == 1) {
-        $allRooms = array_collapse([$renovateRoomIds, $roomCheckout]);
-        
-        $this->syncRooms($allRooms, true);
-    } else {
-        $this->checkEnabledRooms($renovateRoomIds, $roomCheckout);
-    }
-  }
-
-  public function checkEnabledRooms($renovateRoomIds, $roomCheckout) { 
-    $date = currentDate();
-
-    $roomsEnabled = $this->getEnabledRoomsId();
-
-    $oldRoomIds = array_diff($roomsEnabled, $renovateRoomIds);
-
-    if(count($oldRoomIds) > 0) {
-        if($date == $this->arrival_date) {
-            $this->syncRooms($roomCheckout, true);
-            $this->syncRooms($renovateRoomIds);
-        } else {
-            $newRoomIds = array_diff($renovateRoomIds, $roomsEnabled);
-            $newRoomsSync = syncData($newRoomIds, $date);
-            $oldRoomsSync = syncDataCheckout($oldRoomIds, $date);
-            
-            $this->syncRooms($newRoomsSync);
-            $this->syncRooms($oldRoomsSync);
-          }
-
-    } else {
-        $this->syncRooms($renovateRoomIds);
-      }
-  }
-
   public function stateRoomCheckout() {
-        $date = currentDate();
+    $date = currentDate();
 
-        $rooms = $this->getRoomsCheckout()
-        ->wherePivot('check_out', '<=', $date)
-        ->where('state', 'ocupada');
+    $rooms = $this->getRoomsCheckout()
+    ->wherePivot('check_out', '<=', $date)
+    ->where('state', 'ocupada');
 
-        if($rooms->count() > 0) {
-            $rooms = $rooms->get();
+    if($rooms->count() > 0) {
+        $rooms = $rooms->get();
 
-            foreach ($rooms as $room) {
-              $room->state = 'mantenimiento';
-              $room->save();
-           }
+        foreach ($rooms as $room) {
+            $room->state = 'mantenimiento';
+            $room->save();
         }
+    }
   }
 
   public function cancelRooms() {
@@ -474,32 +391,6 @@ class Rental extends Ardent {
     } 
   }
 
-  public function rentalDayWithRoomsHour() {
-    if(!$this->date_hour && $this->type == 'days') {
-        $roomsHourCheckout = $this->getHourRoomsCheckout();
-
-        if($roomsHourCheckout->count() > 0) {
-            $this->date_hour = 1;
-            $this->forceSave();
-        }
-    }
-    
-  }
-
-  /*public function deleteUnnecessaryRecords() {
-    $date = currentDate();
-
-    $record = $this->records()
-    ->where('first', 0)
-    ->where('departure_date', '>', $date)
-    ->orderBy('created_at', 'asc')
-    ->first();
-
-    if($record) {
-        $record->delete();
-    }
-  }*/
-
   public function syncRooms($roomIds, $change = false) {
     $this->rooms()->sync($roomIds, $change);
   }
@@ -508,8 +399,22 @@ class Rental extends Ardent {
 
   public function findRoom($roomId) {
     return $this->rooms()
-    ->where('id', $roomId)
+    ->selectRooms()
+    ->where('rooms.id', $roomId)
     ->first();
+  }
+
+  public function getRooms() {
+    return $this->rooms()
+    ->selectRooms()
+    ->get();
+  }
+
+  public function whereInRooms($roomIds) {
+    return $this->rooms()
+    ->selectRooms()
+    ->whereIn('rooms.id', $roomIds)
+    ->get();
   }
 
   public function getRoomsId() {
@@ -595,12 +500,6 @@ class Rental extends Ardent {
         }
     } 
   }
-
-  /*public function lastRecord() {
-    return $this->records()
-    ->orderBy('created_at', 'desc')
-    ->first();
-  }*/
 
   public function detachRooms($roomIds) {
       $this->rooms()->detach($roomIds);
