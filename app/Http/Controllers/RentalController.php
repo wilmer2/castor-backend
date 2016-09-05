@@ -76,89 +76,31 @@ class RentalController extends Controller {
   }
 
 
-  public function removeRoom(Request $request, $rentalId, $roomId) {
-    $rental = Rental::findOrFail($rentalId);
-
-    if($rental->isCheckout()) {
-        return response()->validation_error('El hospedaje ya tiene salida');
-    }
-
-    if($rental->rooms()->count() == 1) {
-        return response()->validation_error('El hospedaje debe tener al menos una habitación');
-    }
-      
-    $room = $rental->findRoom($roomId);
-    
-    if(!$room) {
-        return response()->validation_error('Habitación no encontrada');
-    }
-
-    if($room->check_out != null) {
-        return response()->validation_error('Habitación no puede ser removida');
-    }
-    
-    $room->state = 'disponible';
-    $room->save();
-
-    $rental->rooms()->detach($roomId);
-    $rental->moveDispatch();
-
-    return response()->json(['message' => 'Habitación a sido removida']);
-
-  }
-
-
-  public function changeRoom(Request $request, $rentalId, $roomId) {
+  public function changeRoom(Request $request, RentalTask $rentalTask, $rentalId, $roomId) {
     $rental = Rental::findOrFail($rentalId);
     $date = currentDate();
-    
-    if($rental->isCheckout()) {
-        return response()->validation_error('El hospedaje ya tiene salida');
+
+    try {
+          $rentalTask->validCheck($rental);
+
+          $room = $rental->findRoom($roomId);
+
+          if(!$room) {
+            return response()->validation_error('Habitación no encontrada');
+          }
+
+          $newRoom = Room::find($request->get('room_id'));
+          $state = $request->get('state');
+
+          $rentalTask->changeRoom($rental, $newRoom, $room, $state);
+
+          $rental->moveDispatch();
+
+          return response()->json($rental);
+
+    } catch (ValidationException $e) {
+          return response()->validation_error($e->getErrors());
     }
-
-    if($rental->reservationExpired()) {
-        return response()->validation_error('La reservación ya expiro');
-    }
-
-    $room = $rental->findRoom($roomId);
-
-    if(!$room) {
-        return response()->validation_error('Habitación no encontrada');
-    }
-
-    if(
-        $room->pivot->check_out != null && 
-        $room->pivot->check_out <= $date &&
-        $rental->type == 'days' ||
-        $rental->type == 'hours' &&
-        $room->pivot->check_out != null
-    ) {
-        return response()->validation_error('La habitación ya tiene salida');
-    }
-
-    $newRoom = Room::find($request->get('room_id'));
-
-    if(
-        $rental->reservation || 
-        $rental->arrival_date == $date || 
-        $rental->type == 'hours'
-    ) { 
-        $rental->rooms()->detach($room->id);
-        $sync = [$newRoom->id];
-    } else {
-        $room->pivot->check_out = $date;
-        $room->pivot->save();
-        
-        $sync = [$newRoom->id => ['check_in' => $date]];
-    }
-
-    $room->state = $request->get('state');
-    $room->save();
-
-    $rental->syncRooms($sync);
-    $rental->moveDispatch();
-
-    return response()->json($rental);
   }
 
 
@@ -179,7 +121,7 @@ class RentalController extends Controller {
            $validRooms = $rentalValidator->isValidRoomDate($roomIds, $date, $rental->departure_date, $hour);
 
            if(!$validRooms) {
-             return response()->validation_error('Alguna de las habitaciones no esta disponible');
+              return response()->validation_error('Alguna de las habitaciones no esta disponible');
            }
 
            $rentalTask->addRoomsDate($rental, $date, $roomIds);
@@ -237,14 +179,13 @@ class RentalController extends Controller {
               return response()->validation_error('El hospedaje debe ser por horas');
           }
 
-          $inputData = $request->only('renovate_hour', 'room_ids', 'amount_renovate');
+          $inputData = $request->only('renovate_hour', 'room_ids');
           $oldDepartureTime = $rental->departure_time;
 
           if($rental->update($inputData)) {
              $rentalTask->renovateHour(
                $rental, 
                $inputData['room_ids'], 
-               $inputData['amount_renovate'], 
                $oldDepartureTime
            );
 
@@ -314,6 +255,23 @@ class RentalController extends Controller {
     } catch (ValidationException $e) {
           return response()->validation_error($e->getErrors());
     }
+  }
+
+  public function removeRoom(Request $request, RentalTask $rentalTask , $rentalId, $roomId) {
+    $rental = Rental::findOrFail($rentalId);
+    
+    try {
+          $rentalTask->validCheck($rental);
+          $rentalTask->removeRoom($rental, $roomId);
+
+          $rental->moveDispatch();
+
+          return response()->json(['message' => 'Habitación a sido removida']);
+
+    } catch (ValidationException $e) {
+          return response()->validation_error($e->getErrors());
+    }
+
   }
 
 
