@@ -19,6 +19,12 @@ class UserController extends Controller {
     'password.required' => 'La contraseña es obligatoria'
   ];
 
+  public function index() {
+    $users = User::all();
+
+    return response()->json($users);
+  }
+
   public function store(Request $request) {
     $data = $request->only('name', 'email', 'password');
     $role = $request->input('role');
@@ -39,7 +45,8 @@ class UserController extends Controller {
         $newUser = User::create([
           'name' => $data['name'],
           'email' => $data['email'],
-          'password' => bcrypt($data['password'])
+          'password' => bcrypt($data['password']),
+          'active' => 1
         ]);
 
         if($role == 1) {
@@ -98,6 +105,16 @@ class UserController extends Controller {
         
         return response()->json($user);
     }
+  }
+
+  public function active($userId) {
+    $user = User::findOrFail($userId); 
+    $active = $user->active;
+
+    $user->active = !$active;
+    $user->save();
+
+    return response()->json($user);
   }
 
   
