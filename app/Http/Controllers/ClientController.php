@@ -29,7 +29,6 @@ class ClientController extends Controller {
 
   public function show($clientId) {
     $client = Client::findOrFail($clientId);
-    $client = $client->getData();
 
     return response()->json($client);
   }
@@ -52,6 +51,14 @@ class ClientController extends Controller {
     $client->delete();
 
     return response()->json(['message' => 'Cliente ha sido borrado']);
+  }
+
+  public function getRentals($clientId) {
+    $client = Client::findOrFail($clientId);
+    $rentals = $client->rentals()
+    ->get();
+
+    return response()->json($rentals);
   }
 
 }
