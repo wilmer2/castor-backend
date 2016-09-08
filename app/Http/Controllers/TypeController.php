@@ -20,7 +20,6 @@ class TypeController extends Controller {
 
     return response()->json($type);
   }
-
   
   public function store(Request $request) {
     $inputData = $request->all();
