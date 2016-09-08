@@ -27,6 +27,10 @@ class TypeController extends Controller {
     $newType = new Type($inputData);
 
     if($newType->save()) {
+        if($inputData['file'] != '') {
+           $newType->uploadImg($inputData['file'], $inputData['mime']); 
+        }
+
         return response()->json($newType);
     } else {
         return response()->validation_error($newType->errors());
@@ -34,11 +38,17 @@ class TypeController extends Controller {
   }
 
   public function update(Request $request, $typeId) {
-    $inputData = $request->only('title', 'description', 'increment');
+    $inputData = $request->all();
 
     $type = Type::findOrFail($typeId);
 
     if($type->update($inputData)) {
+        if($inputData['file'] != '') {
+           $l = $type->uploadImg($inputData['file'], $inputData['mime']); 
+
+           return response()->json($l);
+        }
+
         return response()->json($type);
     } else {
         return response()->validation_error($type->errors());
