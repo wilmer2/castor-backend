@@ -34,7 +34,7 @@ class Type extends Ardent {
     }
   }
 
-  public function countRooms($mime, $img) {
+  public function countRooms() {
     return $this->rooms()
     ->count();
   }
