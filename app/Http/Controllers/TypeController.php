@@ -44,9 +44,7 @@ class TypeController extends Controller {
 
     if($type->update($inputData)) {
         if($inputData['file'] != '') {
-           $l = $type->uploadImg($inputData['file'], $inputData['mime']); 
-
-           return response()->json($l);
+           $type->uploadImg($inputData['file'], $inputData['mime']); 
         }
 
         return response()->json($type);
