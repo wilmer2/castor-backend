@@ -40,7 +40,7 @@ class Type extends Ardent {
   }
 
   public function uploadImg($img, $mime) {
-    $d = $this->dirExists();
+    $this->dirExists();
 
     $dir  = $this->getDirName();
     $file = $this->getNameFile($mime);
@@ -55,8 +55,6 @@ class Type extends Ardent {
     $this->img_url = $this->getUrl($path);
 
     $this->save();
-
-    return $d;
   }
 
   public function dirExists() {
