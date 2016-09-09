@@ -56,9 +56,21 @@ class ClientController extends Controller {
   public function getRentals($clientId) {
     $client = Client::findOrFail($clientId);
     $rentals = $client->rentals()
+    ->where('reservation', 0)
     ->get();
 
     return response()->json($rentals);
+  }
+
+  public function getReservations($clientId) {
+    $client = Client::findOrFail($clientId);
+
+    $reservations = $client->rentals()
+    ->where('reservation', 1)
+    ->orderBy('arrival_date', 'desc')
+    ->get();
+
+    return response()->json($reservations);
   }
 
 }
