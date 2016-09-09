@@ -19,6 +19,7 @@ class RentalController extends Controller {
   public function index() {
     $rentals = Rental::where('checkout', 0)
     ->where('reservation', 0)
+    ->orderBy('arrival_date', 'desc')
     ->get();
 
     foreach ($rentals as $rental) {
@@ -274,28 +275,11 @@ class RentalController extends Controller {
 
   }
 
-
-  public function cancel(Request $request, $rentalId) {
-    $rental = Rental::findOrFail($rentalId);
-
-    if($rental->checkout) {
-        return response()->validation_error('Hospedaje ya tiene salida');
-    }
-
-    $rental->cancelRooms();
-    $rental->state = 'cancelado';
-    $rental->checkout = 1;
-    $rental->forceSave();
-
-    return response()->json(['message' => 'Hospedaje cancelado']);
-  }
-  
-
   public function delete(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
 
-    if($rental->state != 'cancelado') {
-        return response()->validation_error('El hospedaje no puede ser borrado');
+    if($rental->checkout) {
+        return response()->validation_error('Hospedaje con salida no puede ser borrado');
     }
 
     $rental->delete();
