@@ -18,6 +18,7 @@ class RoomController extends Controller {
 
   public function show(Request $request, $roomId) {
     $room = Room::findOrFail($roomId);
+    $room->type;
 
     return response()->json($room);
   }
