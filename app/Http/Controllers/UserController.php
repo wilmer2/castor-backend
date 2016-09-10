@@ -22,6 +22,10 @@ class UserController extends Controller {
   public function index() {
     $users = User::all();
 
+    foreach ($users as $user) {
+      $user->loadRole();
+    }
+
     return response()->json($users);
   }
 
@@ -71,7 +75,7 @@ class UserController extends Controller {
   public function update(Request $request, $userId) {
     $user = User::findOrFail($userId);
 
-    $data = $request->only('name', 'email');
+    $data = $request->only('name', 'email', 'active');
     $role = $request->input('role');
     $newPassword = $request->input('password');
     $newRole = $request->input('role');
