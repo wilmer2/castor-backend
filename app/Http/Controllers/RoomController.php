@@ -97,28 +97,28 @@ class RoomController extends Controller {
 
   public function disableRoom(Request $request, $roomId) {
     $room = Room::findOrFail($roomId);
+    $room->type;
 
     if($room->hasRental()->count() > 0) {
-        return response()->validation_error('La habitación no se pude desabilitar si tiene hospedaje vigente o esta reservada');
+        return response()->validation_error('La habitación no se pude deshabilitar si tiene hospedaje vigente o esta reservada');
     }
-
+    
+    $room->available = 0;
     $room->state = 'desahabilitada';
     $room->save();
 
-    return response()->json(['message' => 'La habitacion ha sido desahabilitada']);
+    return response()->json($room);
   }
 
   public function enableRoom(Request $request, $roomId) {
     $room = Room::findOrFail($roomId);
+    $room->type;
 
-    if($room->state != 'desahabilitada') {
-        return response()->validation_error('Esta habitación no esta desahabilitada');
-    }
-
+    $room->available = 1;
     $room->state = 'disponible';
     $room->save();
 
-    return response()->json(['message' => 'La habitacion ha sido habilitada']);
+    return response()->json($room);
   }
 
   public function delete(Request $request, $roomId) {
