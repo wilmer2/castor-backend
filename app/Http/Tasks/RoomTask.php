@@ -174,7 +174,7 @@ class RoomTask {
     if($departureDate != null) {
       if(!$this->rentalValidator->isValidBetweenDates($arrivalDate, $departureDate)) {
           $valid = false;
-          $this->setMessage('La fecha de salida no es acorde a los tiempos');
+          $this->setMessage('La fecha de salida debe ser mayor');
       }
     } 
     
