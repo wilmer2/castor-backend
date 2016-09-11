@@ -30,7 +30,7 @@ class CheckRentalRooms
 
         if(!$rental->reservation) {
             if($rental->checkout) {
-              $state = 'disponible';
+              $state = 'mantenimiento';
             } else {
               $state = 'ocupada';
             }
