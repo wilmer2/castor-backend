@@ -41,23 +41,6 @@ class Client extends Ardent {
     }
   }
 
-  public function getData() {
-    $reservation = $this->getReservation();
-    $rentals = $this->getRentals();
-
-     $data = [
-       'id' => $this->id,
-       'identity_card' => $this->identity_card,
-       'first_name' => $this->first_name,
-       'last_name' => $this->last_name,
-       'nationality' => $this->nationality,
-       'rentals' => $rentals,
-       'reservations' => $reservation
-     ];
-
-     return $data;
-  }
-
   public function getReservation() {
     return $this->rentals()
     ->where('reservation', 1)
