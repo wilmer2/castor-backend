@@ -8,7 +8,6 @@ use App\Http\Requests;
 use App\Models\Client;
 use App\Models\Rental;
 use App\Models\Room;
-use App\Models\Record;
 use App\Http\Tasks\RoomTask;
 use App\Http\Tasks\RentalTask;
 use App\Validators\RentalValidator;
@@ -33,12 +32,8 @@ class RentalController extends Controller {
     return response()->json($filterRentals);
   }
 
-  public function store(Request $request, RentalTask $rentalTask) {
-    if($request->has('clientId')) {
-        $client = Client::findOrFail($request->get('clientId'));
-    } else {
-        $client = Client::searchForIdentityCard($request->get('identity_card'));
-    }
+  public function store(Request $request, RentalTask $rentalTask, $clientId) {
+    $client = Client::findOrFail($clientId);
 
     $inputData = $request->all();
     $newRental = new Rental($inputData);
@@ -48,7 +43,7 @@ class RentalController extends Controller {
 
     if($newRental->save()) {
         $rentalTask->registerPayment($newRental, $inputData['room_ids']);
-        $newRental->moveDispatch();   
+        $newRental->moveDispatch(); 
 
         return response()->json($newRental);
     } else {
@@ -281,6 +276,10 @@ class RentalController extends Controller {
     if($rental->checkout) {
         return response()->validation_error('Hospedaje con salida no puede ser borrado');
     }
+
+    $roomIds = $rental->getRoomsId();
+    $rental->detachRooms($roomIds);
+    $rental->moveDispatch();
 
     $rental->delete();
 
