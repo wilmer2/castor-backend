@@ -89,8 +89,8 @@ class Rental extends Ardent {
     return $this->belongsTo(Move::class);
   }
 
-  public function records() {
-    return $this->hasMany(Record::class);
+  public function record() {
+    return $this->hasOne(Record::class);
   }
 
   /** Model Events */
@@ -200,31 +200,10 @@ class Rental extends Ardent {
       'state' => $this->state,
       'reservation' => $this->reservation,
       'checkout' => $this->checkout,
-      'available_change' => $this->availableChange(),
       'rooms' => $rooms
     ];
 
     return $data;
-  }
-
-  public function availableChange() {
-    $date = currentDate();
-
-    if(
-        !$this->reservation && 
-        !$this->checkout && 
-        $this->type == 'hours' &&
-        $this->arrival_date == $date
-    ) {
-        $maxHour = sumHour($this->arrival_time, '01:00:00');
-        $currentHour = currentHour();
-
-        if($currentHour > $maxHour) {
-            return false;
-        }
-    }
-
-    return true;
   }
 
   public function addDateTime() {
