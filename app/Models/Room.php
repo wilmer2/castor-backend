@@ -6,7 +6,7 @@ use LaravelArdent\Ardent\Ardent;
 
 class Room extends Ardent {
   
-   protected $fillable = ['code_number', 'state', 'type_id'];
+   protected $fillable = ['code_number', 'state', 'type_id', 'available'];
 
    public static $rules = [
      'code_number' => 'required|unique:rooms,code_number',
@@ -426,9 +426,8 @@ class Room extends Ardent {
     }
 
     public function hasRental() {
-      return $this->whereHas('rentals', function ($q) {
-          $q->where('checkout', 0);
-      });
+      return $this->rentals()
+      ->where('checkout', 0);
     }
 
 
