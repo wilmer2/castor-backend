@@ -33,11 +33,11 @@ class User extends Authenticatable {
 
      public function loadRole() {
        if($this->hasRole('admin')) {
-         $this->role = 'admin';
+         $this->role = 1;
        } elseif ($this->hasRole('super')) {
-         $this->role = 'super';
+         $this->role = 3;
        } else {
-         $this->role = 'user';
+         $this->role = 2;
        }
     }
 }
