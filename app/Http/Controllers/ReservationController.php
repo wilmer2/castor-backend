@@ -29,12 +29,8 @@ class ReservationController extends Controller {
     return response()->json($filterReservations);
   }
 
-  public function addReservation(Request $request, RentalTask $rentalTask) {
-    if($request->has('clientId')) {
-        $client = Client::findOrFail($request->get('clientId'));
-    } else {
-        $client = Client::searchForIdentityCard($request->get('identity_card'));
-    }
+  public function store(Request $request, RentalTask $rentalTask, $clientId) {
+    $client = Client::findOrFail($clientId);
 
     $inputData = $request->all();
     $newReservation = new Rental($inputData);
