@@ -73,4 +73,10 @@ class ClientController extends Controller {
     return response()->json($reservations);
   }
 
+  public function searchForIdentityCard($identityCard) {
+     $client =  Client::searchForIdentityCard($identityCard);
+
+     return response()->json($client);
+  }
+
 }
