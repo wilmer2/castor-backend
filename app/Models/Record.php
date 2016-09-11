@@ -7,24 +7,25 @@ use LaravelArdent\Ardent\Ardent;
 class Record extends Ardent {
   protected $fillable = [
     'rental_id', 
-    'move_id',
-    'type', 
-    'arrival_date', 
-    'departure_date', 
-    'departure_time' ,
-    'first',
-    'payment_type',
-    'amount',
-    'amount_total',
-    'conciliate'
+    'vehicle_type',
+    'vehicle_description',
+    'blanket'
+  ];
+
+  
+  public static $rules = [
+    'vehicle_description' => 'required_with:vehicle_type',
+    'vehicle_type' => 'in:camioneta,moto,carro'
+  ];
+
+
+  public static $customMessages = [
+    'vehicle_description.required_with' => 'La descripción es obligatoria para tipo de vehiculo',
+    'vehicle_type.in' => 'El tipo de vehiculo no es valido'
   ];
 
   public function rental() {
     return $this->belongsTo(Rental::class);
-  }
-
-  public function move() {
-    return $this->belongsTo(Move::class);
   }
 
 }
