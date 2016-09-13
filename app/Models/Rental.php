@@ -200,7 +200,8 @@ class Rental extends Ardent {
       'state' => $this->state,
       'reservation' => $this->reservation,
       'checkout' => $this->checkout,
-      'rooms' => $rooms
+      'rooms' => $rooms,
+      'record' => $this->record
     ];
 
     return $data;
