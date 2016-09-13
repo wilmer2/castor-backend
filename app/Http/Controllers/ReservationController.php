@@ -62,16 +62,15 @@ class ReservationController extends Controller {
     $inputData = $request->only('arrival_date', 'arrival_time', 'departure_time', 'room_ids');
      
     if($rental->update($inputData)) {
-       $rentalTask->registerPayment($rental, $inputData['room_ids']);
-        
+        $rentalTask->registerPayment($rental, $inputData['room_ids']);
         $rental->moveDispatch();
+
         return response()->json($rental);
     } else {
         return response()->validation_error($rental->errors());
     }
     
   }
-  
 
   public function updateReservationForDate(Request $request, RentalTask $rentalTask, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
@@ -124,12 +123,18 @@ class ReservationController extends Controller {
     $rentalId,
     $startDate,
     $startTime,
-    $departureTime
+    $endTime
   ) {
       $rental = Rental::findOrFail($rentalId);
       $roomsId = $rental->getEnabledRoomsId();
 
-      $roomTask->setData($startDate, $startTime, null, $departureTime);
+      if($startTime >= $endTime) {
+          $endDate = addDay($startDate);
+      } else {
+          $endDate = null;
+      }
+
+      $roomTask->setData($startDate, $startTime, $endDate, $endTime);
 
       if(!$roomTask->isValidDataQuery()) {
           return response()->validation_error($roomTask->getMessage());
