@@ -377,10 +377,13 @@ class Rental extends Ardent {
   /** Model Querys */
 
   public function findRoom($roomId) {
-    return $this->rooms()
-    ->selectRooms()
-    ->where('rooms.id', $roomId)
+    $room =  $this->rooms()
+    ->where('id', $roomId)
     ->first();
+
+    $room->type;
+
+    return $room;
   }
 
   public function getRooms() {
