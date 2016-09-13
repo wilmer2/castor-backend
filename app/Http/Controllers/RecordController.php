@@ -23,4 +23,22 @@ class RecordController extends Controller {
         return response()->validation_error($newRecord->errors());
     }
   }
+
+  public function show($recordId) {
+    $record = Record::findOrFail($recordId);
+
+    return response()->json($record);
+  }
+
+  public function update(Request $request, $recordId) {
+    $record = Record::findOrFail($recordId);
+    $inputData = $request->all();
+
+    if($record->update($inputData)) {
+        return response()->json($record);
+    } else {
+        return response()->validation_error($record->errors());
+    }
+  }
+
 }
