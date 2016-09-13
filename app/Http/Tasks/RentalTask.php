@@ -287,7 +287,7 @@ class RentalTask {
   }
 
   public function changeRoom($rental, $newRoom, $oldRoom, $state) {
-     if($oldRoom->pivot->check_out != null) {
+    if($oldRoom->pivot->check_out != null) {
         $message = 'La habitación ya tiene salida';
 
         throw new ValidationException("Error Processing Request", $message);
@@ -317,6 +317,7 @@ class RentalTask {
     $rental->amount += $newRoom->type->increment;
     $oldRoom->state = $state;
     $oldRoom->save();
+
     $rental->syncRooms($sync);
     
     $this->savePayment($rental);
