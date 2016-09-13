@@ -51,7 +51,9 @@ class CheckRentalRooms
 
 
     public function stateRoomWithoutRental() {
-        $rooms = Room::whereDoesntHave('rentals')
+        $rooms = Room::whereDoesntHave('rentals', function ($q) {
+            $q->where('reservation', 0);
+        })
         ->where('state', 'ocupada');
 
         if($rooms->count() > 0) {
