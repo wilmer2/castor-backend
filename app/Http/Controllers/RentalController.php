@@ -61,6 +61,8 @@ class RentalController extends Controller {
 
   public function getRentalEnabledRooms(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
+    $rental->record;
+    
     $enabledRooms = $rental->getEnabledRooms()
     ->selectRooms()
     ->get();
