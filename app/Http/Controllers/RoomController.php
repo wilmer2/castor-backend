@@ -75,8 +75,14 @@ class RoomController extends Controller {
     return response()->json($rooms);
   }
 
-  public function availableHourRooms(Request $request, RoomTask $roomTask, $startDate, $starTime, $endTime) {
-    $roomTask->setData($startDate, $starTime, null, $endTime);
+  public function availableHourRooms(Request $request, RoomTask $roomTask, $startDate, $startTime, $endTime) {
+    if($startTime >= $endTime) {
+        $endDate = addDay($startDate);
+    } else {
+        $endDate = null;
+    }
+
+    $roomTask->setData($startDate, $startTime, $endDate, $endTime);
 
     if(!$roomTask->isValidDataQuery()) {
         return response()->validation_error($roomTask->getMessage());
