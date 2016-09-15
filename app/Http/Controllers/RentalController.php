@@ -125,7 +125,7 @@ class RentalController extends Controller {
            $rentalTask->addRoomsDate($rental, $date, $roomIds);
            $rental->moveDispatch();
 
-           return response()->json($rental);
+           return response()->json(['message' => 'Habitaciones registradas']);
     } catch (ValidationException $e) {
            return response()->validation_error($e->getErrors());
     }
@@ -158,7 +158,7 @@ class RentalController extends Controller {
           $rentalTask->addRoomsHour($rental, $roomIds);
           $rental->moveDispatch();
 
-          return response()->json($rental);
+          return response()->json(['message' => 'Habitaciones registradas']);
 
     } catch (ValidationException $e) {
           return response()->validation_error($e->getErrors());
@@ -249,7 +249,7 @@ class RentalController extends Controller {
           $rental->forceSave();
           $rental->moveDispatch();
 
-          return response()->json(['message' => 'Salida confirmada']);
+          return response()->json($rental);
     } catch (ValidationException $e) {
           return response()->validation_error($e->getErrors());
     }
