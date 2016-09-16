@@ -76,7 +76,7 @@ class Rental extends Ardent {
   }
 
   public function client() {
-    return $this->belongsTo(Client::class);
+    return $this->belongsTo(Client::class, 'client_id');
   }
 
   public function rooms() {
@@ -197,10 +197,13 @@ class Rental extends Ardent {
       'checkout_date' => $this->checkout_date,
       'type' => $this->type,
       'amount' => $this->amount,
+      'amount_impost' => $this->amount_impost,
+      'amount_total' => $this->amount_total,
       'state' => $this->state,
       'reservation' => $this->reservation,
       'checkout' => $this->checkout,
       'rooms' => $rooms,
+      'client' => $this->client,
       'record' => $this->record
     ];
 
