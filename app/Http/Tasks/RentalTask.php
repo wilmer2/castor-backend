@@ -186,9 +186,11 @@ class RentalTask {
     }
 
     $fromTime = strtotime($startDate.' '.$startTime);
+
     $totalHours = calculateTotalHours($fromTime, $toTime);
+
     $amount = $totalHours * $this->setting->price_hour;
-    
+
     return $amount;
   }
 
@@ -233,8 +235,12 @@ class RentalTask {
   }
 
   public function removeRoom($rental, $roomId) {
-    if($rental->rooms()->count() == 1) {
-        $mesage = 'El hospedaje debe tener al menos una habitación';
+    $countRoomAvailable = $rental->rooms()
+    ->where('check_out', null)
+    ->count();
+
+    if($countRoomAvailable == 1) {
+        $message = 'El hospedaje debe tener al menos una habitación';
 
         throw new ValidationException("Error Processing Request", $message);
     }
@@ -262,7 +268,7 @@ class RentalTask {
         $startDate = $room->pivot->check_in;
     } else {
         $startDate = $rental->arrival_date;
-    }
+    }   
 
     if($rental->type == 'days') {
         $amountRest = $this->calculateAmountDay($startDate, $rental->departure_date);
@@ -281,7 +287,7 @@ class RentalTask {
         );
     }
 
-    $amountRest += $room->increment;
+    $amountRest += $room->pivot->price_base;
 
     return $amountRest;
   }
@@ -302,16 +308,16 @@ class RentalTask {
         $rental->type == 'hours' ||
         $checkIn != null &&
         $checkIn == $date
-    ) { 
-        $rental->amount -= $oldRoom->pivot->price_base;
-        $rental->rooms()->detach($oldRoom->roomId);
+    ) {  
+         $rental->amount -= $oldRoom->pivot->price_base;
+         $rental->rooms()->detach($oldRoom->id);
 
-        $sync = syncWithPrice($newRoom->id, $newRoom->type->increment, $rental->type, $checkIn);
+         $sync = syncWithPrice($newRoom->id, $newRoom->type->increment, $rental->type, $checkIn);
     } else {
-        $oldRoom->pivot->check_out = $date;
-        $oldRoom->pivot->save();
+         $oldRoom->pivot->check_out = $date;
+         $oldRoom->pivot->save();
         
-        $sync = syncWithPrice($newRoom->id, $newRoom->type->increment, $rental->type, $date);
+         $sync = syncWithPrice($newRoom->id, $newRoom->type->increment, $rental->type, $date);
     }
 
     $rental->amount += $newRoom->type->increment;
