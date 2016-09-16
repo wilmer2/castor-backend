@@ -264,7 +264,7 @@ class RentalController extends Controller {
 
           $rental->moveDispatch();
 
-          return response()->json(['message' => 'Habitación a sido removida']);
+          return response()->json($rental);
 
     } catch (ValidationException $e) {
           return response()->validation_error($e->getErrors());
