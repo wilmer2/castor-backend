@@ -18,15 +18,31 @@ class ReservationController extends Controller {
     ->whereBetween('arrival_date', array($startDate, $endDate))
     ->get();
 
+    $filterReservations = [];
+
     foreach ($reservations as $reservation) {
+      if(!$reservation->reservationExpired()) {
+            if(!$reservation->checkout) {
+                $reservation->client;
+                $filterReservations[] = $reservation;
+            }
+        }
+    }
+
+
+
+    /*foreach ($reservations as $reservation) {
       $reservation->reservationExpired();
+      $reservation->client;
     }
 
     $filterReservations = $reservations->filter(function ($reservation, $key) {
       return $reservation->reservation == 1;
     });
 
+    return response()->json($filterReservations);*/
     return response()->json($filterReservations);
+
   }
 
   public function store(Request $request, RentalTask $rentalTask, $clientId) {
@@ -164,7 +180,7 @@ class ReservationController extends Controller {
            $rental->reservation = 0;
            $rental->forceSave();
 
-           return response()->json(['message' => 'Reservación confirmada']);
+           return response()->json($rental);
     } catch (ValidationException $e) {
            return response()->validation_error($e->getErrors());
     }
