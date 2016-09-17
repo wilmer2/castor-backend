@@ -13,6 +13,27 @@ use App\Validators\ValidationException;
 
 class ReservationController extends Controller {
 
+  public function index() {
+    $date = currentDate();
+
+    $reservations = Rental::where('reservation', 1)
+    ->where('arrival_date', '<=', $date)
+    ->get();
+
+    $filterReservations = [];
+
+    foreach ($reservations as $reservation) {
+      if(!$reservation->reservationExpired()) {
+         if(!$reservation->checkout) {
+             $reservation->client;
+             $filterReservations[] = $reservation;
+         }
+      }
+    }
+
+    return response()->json($filterReservations);
+  }
+
   public function getReservation($startDate, $endDate) {
     $reservations = Rental::where('reservation', 1)
     ->whereBetween('arrival_date', array($startDate, $endDate))
@@ -22,25 +43,13 @@ class ReservationController extends Controller {
 
     foreach ($reservations as $reservation) {
       if(!$reservation->reservationExpired()) {
-            if(!$reservation->checkout) {
-                $reservation->client;
-                $filterReservations[] = $reservation;
-            }
-        }
+         if(!$reservation->checkout) {
+             $reservation->client;
+             $filterReservations[] = $reservation;
+         }
+      }
     }
 
-
-
-    /*foreach ($reservations as $reservation) {
-      $reservation->reservationExpired();
-      $reservation->client;
-    }
-
-    $filterReservations = $reservations->filter(function ($reservation, $key) {
-      return $reservation->reservation == 1;
-    });
-
-    return response()->json($filterReservations);*/
     return response()->json($filterReservations);
 
   }
