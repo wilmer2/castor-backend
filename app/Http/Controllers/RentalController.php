@@ -54,6 +54,7 @@ class RentalController extends Controller {
 
   public function show(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
+    $rental->isCheckout();
     $rental = $rental->getData();
 
     return response()->json($rental);
@@ -61,6 +62,7 @@ class RentalController extends Controller {
 
   public function getRentalEnabledRooms(Request $request, $rentalId) {
     $rental = Rental::findOrFail($rentalId);
+    $rental->isCheckout();
     $rental->record;
     
     $enabledRooms = $rental->getEnabledRooms()
@@ -79,8 +81,12 @@ class RentalController extends Controller {
     $date = currentDate();
 
     try {
-          $rentalTask->validCheck($rental);
-
+          if($rental->type == 'days') {
+              $rentalTask->validCheck($rental);
+          } else {
+              $rentalTask->validHour($rental);
+          }
+          
           $room = $rental->findRoom($roomId);
 
           if(!$room) {
