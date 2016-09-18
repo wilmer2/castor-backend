@@ -14,12 +14,12 @@ class SecurityMiddleware
      * @param  \Closure  $next
      * @return mixed
      */
-    public function handle($request, Closure $next)
-    {   
-        if (!auth()->check()) {
-            return response('Unauthorized.', 401);
-        }
+    public function handle($request, Closure $next) {
+      if(!auth()->check()) {
+         return response('Unauthorized.', 401);
+      }
 
-        return $next($request);
+      return $next($request);
     }
+   
 }
