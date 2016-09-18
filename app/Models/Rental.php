@@ -305,7 +305,8 @@ class Rental extends Ardent {
             $this->departure_time < $hour ||
             $this->departure_date == $date  &&
             $this->departure_time < $hour
-        ) {
+        ) { 
+            
             return true;
         }
     }
@@ -324,13 +325,17 @@ class Rental extends Ardent {
         $this->departure_date == null &&
         $this->arrival_date < $currentDate
       ) { 
-          if($this->state != 'conciliado') {
-              $this->state = 'expirado';
+          if($this->state == 'conciliado') {
+              $this->reservation = 0;
+              $this->checkout = 1;
+              $this->forceSave();
+          } else {
+              $this->delete();
+
+              return true;
           }
 
-          $this->reservation = 0;
-          $this->checkout = 1;
-          $this->forceSave();
+          
     }
 
     return $this->checkout;
