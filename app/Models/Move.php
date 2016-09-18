@@ -27,7 +27,7 @@ class Move extends Ardent {
 
   public function scopeAmountMove($query) {
     return $query->selectMoves()
-    ->select('users.name', 'moves.date')
+    ->select('users.email', 'moves.date')
     ->selectRaw(
          $this->getCountRentalsDays() . 'as num_days,'
         .$this->getCountRentalsHours(). 'as num_hours,'
