@@ -16,6 +16,12 @@ class LoginController extends Controller {
     if($authenticate) {
         $user = currentUser();
 
+        if(!$user->active) {
+            auth()->logout();
+
+            return response()->validation_error('Esta cuenta no esta activa');
+        }
+
         return response()->json($user);
     } else {
         return response()->validation_error('Credenciales no son válidas');
@@ -27,4 +33,5 @@ class LoginController extends Controller {
 
     return response()->json(['message' => 'Session Finalizada']);
   }
+  
 }
