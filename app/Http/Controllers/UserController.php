@@ -72,6 +72,14 @@ class UserController extends Controller {
     return response()->json($user);
   }
 
+  public function logged() {
+    $user = currentUser();
+
+    $user->loadRole();
+
+    return response()->json($user);
+  }
+
   public function update(Request $request, $userId) {
     $user = User::findOrFail($userId);
 
