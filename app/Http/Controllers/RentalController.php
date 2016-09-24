@@ -97,7 +97,6 @@ class RentalController extends Controller {
           $state = $request->get('state');
 
           $rentalTask->changeRoom($rental, $newRoom, $room, $state);
-
           $rental->moveDispatch();
 
           return response()->json($rental);
