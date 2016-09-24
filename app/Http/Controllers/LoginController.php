@@ -15,13 +15,14 @@ class LoginController extends Controller {
 
     if($authenticate) {
         $user = currentUser();
-        $user->loadRole();
 
         if(!$user->active) {
             auth()->logout();
 
             return response()->validation_error('Esta cuenta no esta activa');
         }
+
+         $user->loadRole();
 
         return response()->json($user);
     } else {
