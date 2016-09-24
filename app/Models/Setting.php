@@ -7,6 +7,8 @@ use LaravelArdent\Ardent\Ardent;
 class Setting extends Ardent {
   
   protected $fillable = [
+    'name',
+    'rif',
     'price_day', 
     'price_hour', 
     'time_minimum',
@@ -15,6 +17,8 @@ class Setting extends Ardent {
   ];
 
   public static $rules = [
+    'name' => 'required',
+    'rif' => 'required|between:10,10',
     'price_day' => 'required|numeric',
     'price_hour' => 'required|numeric',
     'time_minimum' => 'required|date_format:H:i:s',
@@ -22,6 +26,9 @@ class Setting extends Ardent {
   ];
 
   public static $customMessages = [
+    'name.required' => 'El nombre de empresa es obligatorio',
+    'rif.required' => 'El rif es obligatorio',
+    'rif.between' => 'El rif debe tener 10 caracteres',
     'price_day.required' => 'El precio por dia es obligatorio',
     'price_day.numeric' => 'El precio por dia deber ser un número',
     'price_hour.required' => 'El precio por hora es obligatorio',
