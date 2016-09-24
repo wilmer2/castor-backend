@@ -75,6 +75,14 @@ class RoomController extends Controller {
     return response()->json($rooms);
   }
 
+  public function availableAddDatesRooms(Request $request, RoomTask $roomTask, $startDate, $endDate, $time) { 
+    $roomTask->setData($startDate, $time, $endDate);
+
+    $rooms = $roomTask->getAvailableDateRoom();
+
+    return response()->json($rooms);
+  }
+
   public function availableHourRooms(Request $request, RoomTask $roomTask, $startDate, $startTime, $endTime) {
     if($startTime >= $endTime) {
         $endDate = addDay($startDate);
