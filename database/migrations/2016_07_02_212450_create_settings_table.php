@@ -14,6 +14,8 @@ class CreateSettingsTable extends Migration
     {
         Schema::create('settings', function (Blueprint $table) {
             $table->increments('id');
+            $table->string('name');
+            $table->string('rif');
             $table->float('price_day');
             $table->float('price_hour');
             $table->time('time_minimum');
