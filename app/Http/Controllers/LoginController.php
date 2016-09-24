@@ -15,6 +15,7 @@ class LoginController extends Controller {
 
     if($authenticate) {
         $user = currentUser();
+        $user->loadRole();
 
         if(!$user->active) {
             auth()->logout();
