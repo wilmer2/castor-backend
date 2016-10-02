@@ -41,6 +41,12 @@ class Client extends Ardent {
     }
   }
 
+  public function scopeName($query, $name) {
+    return $query->where(\DB::raw('CONCAT(first_name, " ", last_name)'), 'Like', '%'.$name.'%')
+    ->take(5)
+    ->get();
+  }
+
   public function getReservation() {
     return $this->rentals()
     ->where('reservation', 1)
