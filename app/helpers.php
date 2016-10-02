@@ -71,18 +71,13 @@ function syncWithPrice($roomId, $price, $type, $checkIn = null) {
   if($checkIn == null) {
       $sync = [$roomId => ['price_base' => $price]];
   } else {
-      if($type == 'hours') {
-          $time = currentHour();
+      $time = currentHour();
 
-          $sync = [$roomId => [
-            'check_in' => $checkIn, 
-            'price_base' => $price, 
-            'check_timein' => $time
-          ]];
-      } else {
-          $sync = [$roomId => ['check_in' => $checkIn, 'price_base' => $price]];
-
-      }
+      $sync = [$roomId => [
+        'check_in' => $checkIn, 
+        'price_base' => $price, 
+        'check_timein' => $time
+      ]];
 
   }
 
