@@ -38,7 +38,8 @@ class RentalTask {
 
   public function addRoomsDate($rental, $startDate, $roomIds) {
     if(!$rental->reservation && $rental->arrival_date < $startDate) {
-        $roomSyncIds = syncData($roomIds, $startDate);
+        $currentHour = currentHour();
+        $roomSyncIds = syncCheckinHour($roomIds, $startDate, $currentHour);
         $rental->syncRooms($roomSyncIds);
     } else {
         $rental->syncRooms($roomIds);
@@ -124,9 +125,11 @@ class RentalTask {
   public function renovateHour($rental, $renovateRoomIds, $oldDepartureTime) {
     $rental->extra_hour = null;
 
-    if($rental->departure_data == null) {
+    if($rental->departure_date == null) {
+        $startDate = $rental->arrival_date;
         $departureDate = $rental->arrival_date;
     } else {
+        $startDate = $rental->departure_date;
         $departureDate = $rental->departure_date;
     }
 
@@ -144,7 +147,7 @@ class RentalTask {
     }
 
     $amountPerHour = $this->calculateAmountHour(
-      $rental->arrival_date,
+      $startDate,
       $oldDepartureTime,
       $rental->departure_time,
       $rental->departure_date
@@ -314,7 +317,9 @@ class RentalTask {
 
          $sync = syncWithPrice($newRoom->id, $newRoom->type->increment, $rental->type, $checkIn);
     } else {
+         $time = currentHour();
          $oldRoom->pivot->check_out = $date;
+         $oldRoom->pivot->check_timeout = $time;
          $oldRoom->pivot->save();
         
          $sync = syncWithPrice($newRoom->id, $newRoom->type->increment, $rental->type, $date);
