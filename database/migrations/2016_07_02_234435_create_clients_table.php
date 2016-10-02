@@ -19,6 +19,7 @@ class CreateClientsTable extends Migration
             $table->string('last_name');
             $table->enum('nationality', ['E', 'V']);
             
+            $table->softDeletes();
             $table->timestamps();
         });
     }

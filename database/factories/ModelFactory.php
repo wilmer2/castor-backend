@@ -19,7 +19,9 @@ $factory->define(App\Models\Setting::class, function (Faker\Generator $faker) {
     'price_hour' => 600,
     'time_minimum' => createHour($minimumHour),
     'active_impost' => 1,
-    'impost' => 12
+    'impost' => 12,
+    'name' => 'Hotel Castor',
+    'rif' => 'v123456789'
   ];
 });
 
@@ -64,7 +66,8 @@ $factory->define(App\Models\Client::class, function (Faker\Generator $faker) {
 $factory->defineAs(App\Models\Type::class, 'basic', function (Faker\Generator $faker) {
   return [
     'title' => 'Basica',
-    'description' => 'Habitación con cama matrimonial, tv cable y aire acondicionado'
+    'description' => 'Habitación con cama matrimonial, tv cable y aire acondicionado',
+    'img_url' => 'http://castor_backend/img/default/default_room.jpg'
   ];
 
 });
@@ -73,7 +76,8 @@ $factory->defineAS(App\Models\Type::class, 'special', function (Faker\Generator 
   return [
     'title' => 'Especial',
     'description' => 'Habitación con cama matrimonial, tv cable, aire acondicionado y calentador',
-    'increment' => 200
+    'increment' => 200,
+    'img_url' => 'http://castor_backend/img/default/default_room.jpg'
   ];
 });
 

@@ -16,7 +16,8 @@ class CreateRoomsTable extends Migration
             $table->increments('id');
             $table->integer('type_id')->unsigned();
             $table->string('code_number')->unique();
-            $table->enum('state', ['disponible', 'mantenimiento', 'ocupada', 'fuera de servicio']);
+            $table->enum('state', ['disponible', 'mantenimiento', 'ocupada', 'desahabilitada']);
+            $table->boolean('available')->default(1);
             
             $table->foreign('type_id')->references('id')->on('types');
             $table->timestamps();

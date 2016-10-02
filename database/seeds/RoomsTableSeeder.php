@@ -11,7 +11,7 @@ class RoomsTableSeeder extends Seeder
      * @return void
      */
     public function run() {
-      foreach(range(1, 99) as $index) {
+      foreach(range(1, 10) as $index) {
         $codeNumber = 'hb-'.$index;
 
         if($index <= 3) {

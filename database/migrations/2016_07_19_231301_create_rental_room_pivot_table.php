@@ -21,7 +21,7 @@ class CreateRentalRoomPivotTable extends Migration
             $table->time('check_timeout')->nullable();
             $table->date('check_in')->nullable();
             $table->date('check_out')->nullable();
-            $table->boolean('pass_time');
+            $table->float('price_base');
             $table->primary(['rental_id', 'room_id']);
             $table->timestamps();
         });

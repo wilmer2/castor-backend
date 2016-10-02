@@ -17,6 +17,7 @@ class CreateTypesTable extends Migration
             $table->string('title')->unique();
             $table->string('description');
             $table->float('increment');
+            $table->string('img_url');
             
             $table->timestamps();
         });
