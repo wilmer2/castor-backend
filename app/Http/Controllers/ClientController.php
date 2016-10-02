@@ -79,4 +79,11 @@ class ClientController extends Controller {
      return response()->json($client);
   }
 
+  public function search(Request $request) {
+    $name = $request->get('name');
+    $clients = Client::name($name);
+
+    return response()->json($clients);
+  }
+
 }
