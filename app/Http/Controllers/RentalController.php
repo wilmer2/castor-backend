@@ -23,6 +23,7 @@ class RentalController extends Controller {
 
     foreach ($rentals as $rental) {
       $rental->isCheckout();
+      $rental->client;
     }
 
     $filterRentals = $rentals->filter(function ($rental, $key) {
@@ -175,7 +176,6 @@ class RentalController extends Controller {
     $rental = Rental::findOrFail($rentalId);
 
     try {
-
           $rentalTask->validCheck($rental);
 
           if($rental->type == 'days') {
@@ -186,18 +186,18 @@ class RentalController extends Controller {
           $oldDepartureTime = $rental->departure_time;
 
           if($rental->update($inputData)) {
-             $rentalTask->renovateHour(
-               $rental, 
-               $inputData['room_ids'], 
-               $oldDepartureTime
-           );
+              $rentalTask->renovateHour(
+                $rental, 
+                $inputData['room_ids'], 
+                $oldDepartureTime
+              );
 
-           $rental->moveDispatch();
+              $rental->moveDispatch();
 
-           return response()->json($rental);
-        } else {
-           return response()->validation_error($rental->errors());
-        }
+              return response()->json($rental);
+          } else {
+              return response()->validation_error($rental->errors());
+          }
     } catch (ValidationException $e) {
          return response()->validation_error($e->getErrors());
     }
@@ -208,7 +208,7 @@ class RentalController extends Controller {
     $rental = Rental::findOrFail($rentalId);
 
     try {
-        
+      
           $rentalTask->validRenovate($rental);
     
           $oldType = $rental->type;
